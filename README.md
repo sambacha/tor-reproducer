@@ -45,10 +45,13 @@ Build our Docker image:
 
 To verify a specific version of Briar, run
 
-    docker run briar/tor-reproducer:latest ./build-tor.py [tag]
+    docker run briar/tor-reproducer:latest ./build-tor.py [version]
 
-Where `[tag]` is the git tag (source code snapshot) that identifies the version
-of Tor you want to test, for example `tor-0.3.3.6`.
+Where `[version]` is the version of Tor you want to test, for example `0.3.3.6`.
 
-You can find a list of tags in Tor's
+You can find a list of versions in Tor's
 [source code repository](https://gitweb.torproject.org/tor.git/refs/).
+Just remove the `tor-` from `tor-0.3.3.6`.
+
+If you leave out `[version]` it will build the latest version
+that was registered in `tor-versions.json`.
