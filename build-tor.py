@@ -36,6 +36,8 @@ def main():
 
     # zip everything together
     file_list = ['tor_arm_pie.zip', 'tor_arm.zip', 'tor_x86_pie.zip', 'tor_x86.zip', 'geoip.zip']
+    for filename in file_list:
+        reset_time(os.path.join(REPO_DIR, filename))  # make file times deterministic before zipping
     zip_name = 'tor-android-%s.zip' % versions['tor'].split('-')[1]
     check_call(['zip', '-D', '-X', zip_name] + file_list, cwd=REPO_DIR)
 
@@ -156,7 +158,9 @@ def build_arch(name):
     check_call(['make', '-C', 'external', 'clean', 'tor'], cwd=REPO_DIR)
     copy(os.path.join(REPO_DIR, 'external', 'bin', 'tor'), os.path.join(REPO_DIR, 'tor'))
     check_call(['strip', '-D', 'tor'], cwd=REPO_DIR)
-    reset_time(os.path.join(REPO_DIR, 'tor'))
+    tor_path = os.path.join(REPO_DIR, 'tor')
+    reset_time(tor_path)
+    print("Sha256 hash of tor before zipping %s: %s" % (name, get_sha256(tor_path)))
     check_call(['zip', '-X', name, 'tor'], cwd=REPO_DIR)
 
 
