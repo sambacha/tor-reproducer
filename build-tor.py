@@ -1,24 +1,21 @@
 #!/usr/bin/env python3
-import json
 import os
 import sys
-from collections import OrderedDict
 from shutil import move, copy, rmtree
 from subprocess import check_call
 
-from utils import get_sha256, fail
+from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_final_file_name, get_version
 
 NDK_DIR = 'android-ndk'
-REPO_DIR = 'tor-android'
 
 
 def main():
-    if len(sys.argv) > 2:
-        fail("Usage: %s [Tor version tag]" % sys.argv[0])
-    tag = sys.argv[1] if len(sys.argv) > 1 else None
+    # get Tor version from command or show usage information
+    version = get_version()
 
     # get Tor version and versions of its dependencies
-    versions = get_build_versions(tag)
+    versions = get_build_versions(version)
+    print("Building Tor %s" % versions['tor'])
 
     # setup Android NDK
     setup_android_ndk(versions)
@@ -38,26 +35,13 @@ def main():
     file_list = ['tor_arm_pie.zip', 'tor_arm.zip', 'tor_x86_pie.zip', 'tor_x86.zip', 'geoip.zip']
     for filename in file_list:
         reset_time(os.path.join(REPO_DIR, filename))  # make file times deterministic before zipping
-    zip_name = 'tor-android-%s.zip' % versions['tor'].split('-')[1]
+    zip_name = get_final_file_name(versions)
     check_call(['zip', '-D', '-X', zip_name] + file_list, cwd=REPO_DIR)
 
     # print hashes for debug purposes
     for file in file_list + [zip_name]:
         sha256hash = get_sha256(os.path.join(REPO_DIR, file))
         print("%s: %s" % (file, sha256hash))
-
-
-def get_build_versions(tag):
-    # load Tor versions and their dependencies
-    with open('tor-versions.json', 'r') as f:
-        versions = json.load(f, object_pairs_hook=OrderedDict)
-
-    if tag is None:
-        # take top-most Tor version
-        tag = next(iter(versions))
-
-    print("Building Tor %s" % versions[tag]['tor'])
-    return versions[tag]
 
 
 def setup_android_ndk(versions):
