@@ -31,12 +31,13 @@ def main():
 
     # zip geoip database
     geoip_path = os.path.join(REPO_DIR, 'external', 'tor', 'src', 'config', 'geoip')
-    check_call(['zip', '-X', os.path.join(REPO_DIR, 'geoip.zip'), geoip_path])
+    reset_time(geoip_path)
+    check_call(['zip', '-D', '-X', os.path.join(REPO_DIR, 'geoip.zip'), geoip_path])
 
     # zip everything together
     file_list = ['tor_arm_pie.zip', 'tor_arm.zip', 'tor_x86_pie.zip', 'tor_x86.zip', 'geoip.zip']
     zip_name = 'tor-android-%s.zip' % versions['tor'].split('-')[1]
-    check_call(['zip', '-X', zip_name] + file_list, cwd=REPO_DIR)
+    check_call(['zip', '-D', '-X', zip_name] + file_list, cwd=REPO_DIR)
 
     # print hashes for debug purposes
     for file in file_list + [zip_name]:
@@ -155,7 +156,12 @@ def build_arch(name):
     check_call(['make', '-C', 'external', 'clean', 'tor'], cwd=REPO_DIR)
     copy(os.path.join(REPO_DIR, 'external', 'bin', 'tor'), os.path.join(REPO_DIR, 'tor'))
     check_call(['strip', '-D', 'tor'], cwd=REPO_DIR)
-    check_call(['zip', name, 'tor'], cwd=REPO_DIR)
+    reset_time(os.path.join(REPO_DIR, 'tor'))
+    check_call(['zip', '-X', name, 'tor'], cwd=REPO_DIR)
+
+
+def reset_time(filename):
+    check_call(['touch', '--no-dereference', '-t', '197001010000.00', filename])
 
 
 if __name__ == "__main__":
