@@ -83,7 +83,7 @@ def setup_android_ndk(versions):
 def prepare_tor_android_repo(versions):
     if os.path.isdir(REPO_DIR):
         # get latest commits and tags from remote
-        check_call(['git', 'fetch', 'origin'], cwd=REPO_DIR)
+        check_call(['git', 'fetch', '--recurse-submodules=yes', 'origin'], cwd=REPO_DIR)
     else:
         # clone repo
         url = versions['tor_android_repo_url']
