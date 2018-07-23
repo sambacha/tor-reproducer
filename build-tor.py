@@ -4,7 +4,7 @@ import sys
 from shutil import move, copy, rmtree
 from subprocess import check_call
 
-from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_final_file_name, get_version
+from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_tor_version, get_final_file_name, get_sources_file_name, get_pom_file_name, get_version
 
 NDK_DIR = 'android-ndk'
 
@@ -38,8 +38,28 @@ def main():
     zip_name = get_final_file_name(versions)
     check_call(['zip', '-D', '-X', zip_name] + file_list, cwd=REPO_DIR)
 
+    # create sources jar
+    external_dir = os.path.join(REPO_DIR, 'external')
+    check_call(['git', 'clean', '-dfx'], cwd=external_dir)
+    jar_files = []
+    for root, dirnames, filenames in os.walk(external_dir):
+        for f in filenames: jar_files.append(os.path.join(root, f))
+    for file in jar_files: reset_time(file, zip=True)
+    jar_name = get_sources_file_name(versions)
+    jar_path = os.path.abspath(os.path.join(REPO_DIR, jar_name))
+    rel_paths = [os.path.relpath(f, external_dir) for f in sorted(jar_files)]
+    check_call(['jar', 'cnf', jar_path] + rel_paths, cwd=external_dir)
+
+    # create POM file from template
+    tor_version = get_tor_version(versions)
+    pom_name = get_pom_file_name(versions)
+    with open('template.pom', 'rt') as infile:
+        with open(os.path.join(REPO_DIR, pom_name), 'wt') as outfile:
+            for line in infile:
+                outfile.write(line.replace('VERSION', tor_version))
+
     # print hashes for debug purposes
-    for file in file_list + [zip_name]:
+    for file in file_list + [zip_name, jar_name, pom_name]:
         sha256hash = get_sha256(os.path.join(REPO_DIR, file))
         print("%s: %s" % (file, sha256hash))
 
@@ -148,8 +168,10 @@ def build_arch(name):
     check_call(['zip', '-X', name, 'tor'], cwd=REPO_DIR)
 
 
-def reset_time(filename):
-    check_call(['touch', '--no-dereference', '-t', '197001010000.00', filename])
+def reset_time(filename, zip=False):
+    if zip: timestamp = '198001010000.00'
+    else: timestamp = '197001010000.00'
+    check_call(['touch', '--no-dereference', '-t', timestamp, filename])
 
 
 if __name__ == "__main__":
