@@ -12,4 +12,5 @@ apt-get install -y --no-install-recommends \
 	autopoint \
 	libtool \
 	automake \
-	binutils-multiarch
+	binutils-multiarch \
+	fastjar

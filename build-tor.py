@@ -48,7 +48,7 @@ def main():
     jar_name = get_sources_file_name(versions)
     jar_path = os.path.abspath(os.path.join(REPO_DIR, jar_name))
     rel_paths = [os.path.relpath(f, external_dir) for f in sorted(jar_files)]
-    check_call(['jar', 'cnf', jar_path] + rel_paths, cwd=external_dir)
+    check_call(['jar', 'cf', jar_path] + rel_paths, cwd=external_dir)
 
     # create POM file from template
     tor_version = get_tor_version(versions)
