@@ -3,7 +3,7 @@ import os
 import sys
 from subprocess import check_call, CalledProcessError
 
-from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_final_file_name, get_version
+from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_final_file_name, get_version, get_tor_version
 
 
 def main():
@@ -47,7 +47,7 @@ def main():
 
 
 def get_url(versions, fallback=False):
-    version = versions['tor'].split('-')[1]
+    version = get_tor_version(versions)
     file = get_final_file_name(versions)
     if not fallback:
         return "https://jcenter.bintray.com/org/briarproject/tor-android/%s/%s" % (version, file)

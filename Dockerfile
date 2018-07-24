@@ -9,6 +9,7 @@ ADD build-tor.py ./
 ADD install*.sh ./
 ADD tor-versions.json ./
 ADD utils.py ./
+ADD template.pom ./
 
 RUN ./install.sh
 
