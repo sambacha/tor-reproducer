@@ -39,10 +39,10 @@ def main():
     check_call(['zip', '-D', '-X', zip_name] + file_list, cwd=REPO_DIR)
 
     # create sources jar
-    create_sources_jar(versions)
+    jar_name = create_sources_jar(versions)
 
     # create POM file from template
-    create_pom_file(versions)
+    pom_name = create_pom_file(versions)
 
     # print hashes for debug purposes
     for file in file_list + [zip_name, jar_name, pom_name]:
@@ -169,6 +169,7 @@ def create_sources_jar(versions):
     jar_path = os.path.abspath(os.path.join(REPO_DIR, jar_name))
     rel_paths = [os.path.relpath(f, external_dir) for f in sorted(jar_files)]
     check_call(['jar', 'cf', jar_path] + rel_paths, cwd=external_dir)
+    return jar_name
 
 
 def create_pom_file(versions):
@@ -178,6 +179,7 @@ def create_pom_file(versions):
         with open(os.path.join(REPO_DIR, pom_name), 'wt') as outfile:
             for line in infile:
                 outfile.write(line.replace('VERSION', tor_version))
+    return pom_name
 
 
 if __name__ == "__main__":
