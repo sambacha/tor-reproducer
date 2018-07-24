@@ -51,6 +51,7 @@ def main():
     check_call(['jar', 'cf', jar_path] + rel_paths, cwd=external_dir)
 
     # create POM file from template
+    print("Working directory: %s" % os.path.abspath(os.getcwd()))
     tor_version = get_tor_version(versions)
     pom_name = get_pom_file_name(versions)
     with open('template.pom', 'rt') as infile:
