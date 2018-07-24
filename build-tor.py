@@ -44,7 +44,7 @@ def main():
     jar_files = []
     for root, dirnames, filenames in os.walk(external_dir):
         for f in filenames: jar_files.append(os.path.join(root, f))
-    for file in jar_files: reset_time(file, zip=True)
+    for file in jar_files: reset_time(file)
     jar_name = get_sources_file_name(versions)
     jar_path = os.path.abspath(os.path.join(REPO_DIR, jar_name))
     rel_paths = [os.path.relpath(f, external_dir) for f in sorted(jar_files)]
@@ -168,10 +168,8 @@ def build_arch(name):
     check_call(['zip', '-X', name, 'tor'], cwd=REPO_DIR)
 
 
-def reset_time(filename, zip=False):
-    if zip: timestamp = '198001010000.00'
-    else: timestamp = '197001010000.00'
-    check_call(['touch', '--no-dereference', '-t', timestamp, filename])
+def reset_time(filename):
+    check_call(['touch', '--no-dereference', '-t', '197001010000.00', filename])
 
 
 if __name__ == "__main__":
