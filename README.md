@@ -45,7 +45,7 @@ Build our Docker image:
 
 To verify a specific version of Briar, run
 
-    docker run briar/tor-reproducer:latest ./build-tor.py [version]
+    docker run briar/tor-reproducer:latest ./verify-tor.py [version]
 
 Where `[version]` is the version of Tor you want to test, for example `0.3.3.6`.
 
@@ -55,3 +55,19 @@ Just remove the `tor-` from `tor-0.3.3.6`.
 
 If you leave out `[version]` it will build the latest version
 that was registered in `tor-versions.json`.
+
+In case there is an issue with the verification of an old build,
+this *might* be caused by an update of the container.
+You can try to use the original container by running:
+
+    docker run briar/tor-reproducer:[version] ./build-tor.py [version]
+
+There should be a tag with the name `[version]` in this repository
+that you could be used to reproduce the old container.
+Note that this will not work if the issue is caused by an updated Debian package.
+
+### Only build Tor
+
+To build a specific version of Briar, run
+
+    docker run briar/tor-reproducer:latest ./build-tor.py [version]
