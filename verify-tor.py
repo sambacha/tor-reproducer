@@ -3,7 +3,8 @@ import os
 import sys
 from subprocess import check_call, CalledProcessError
 
-from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_final_file_name, get_version, get_tor_version
+from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_final_file_name, \
+    get_version, get_tor_version
 
 
 def main():

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 import os
-import sys
 from shutil import move, copy, rmtree
 from subprocess import check_call
 
-from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_tor_version, get_final_file_name, get_sources_file_name, get_pom_file_name, get_version
+from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_tor_version, \
+    get_final_file_name, get_sources_file_name, get_pom_file_name, get_version
 
 NDK_DIR = 'android-ndk'
 
@@ -162,9 +162,11 @@ def create_sources_jar(versions):
     external_dir = os.path.join(REPO_DIR, 'external')
     check_call(['git', 'clean', '-dfx'], cwd=external_dir)
     jar_files = []
-    for root, dirnames, filenames in os.walk(external_dir):
-        for f in filenames: jar_files.append(os.path.join(root, f))
-    for file in jar_files: reset_time(file)
+    for root, dir_names, filenames in os.walk(external_dir):
+        for f in filenames:
+            jar_files.append(os.path.join(root, f))
+    for file in jar_files:
+        reset_time(file)
     jar_name = get_sources_file_name(versions)
     jar_path = os.path.abspath(os.path.join(REPO_DIR, jar_name))
     rel_paths = [os.path.relpath(f, external_dir) for f in sorted(jar_files)]
@@ -183,4 +185,4 @@ def create_pom_file(versions):
 
 
 if __name__ == "__main__":
-        main()
+    main()
