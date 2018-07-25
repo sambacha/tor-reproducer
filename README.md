@@ -43,7 +43,7 @@ Build our Docker image:
 
 ### Run the verification
 
-To verify a specific version of Briar, run
+To verify a specific version of Tor for Android, run
 
     docker run briar/tor-reproducer:latest ./verify-tor.py [version]
 
@@ -68,6 +68,6 @@ Note that this will not work if the issue is caused by an updated Debian package
 
 ### Only build Tor
 
-To build a specific version of Briar, run
+To build a specific version of Tor for Android, run
 
     docker run briar/tor-reproducer:latest ./build-tor.py [version]
