@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import os
-from shutil import move, copy, rmtree
+from shutil import move, copy, rmtree, copytree
 from subprocess import check_call
 
 from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_tor_version, \
@@ -31,21 +31,30 @@ def main():
     reset_time(geoip_path)
     check_call(['zip', '-D', '-X', os.path.join(REPO_DIR, 'geoip.zip'), geoip_path])
 
-    # zip everything together
+    # zip Android binaries together
     file_list = ['tor_arm_pie.zip', 'tor_arm.zip', 'tor_x86_pie.zip', 'tor_x86.zip', 'geoip.zip']
-    for filename in file_list:
-        reset_time(os.path.join(REPO_DIR, filename))  # make file times deterministic before zipping
-    zip_name = get_final_file_name(versions)
-    check_call(['zip', '-D', '-X', zip_name] + file_list, cwd=REPO_DIR)
+    zip_name = pack(versions, file_list, 'android')
+
+    # zip Linux binaries together
+    file_list_linux = ['tor_linux-x86_64.zip', 'geoip.zip']
+    zip_name_linux = pack(versions, file_list_linux, 'linux')
+
+    # create POM file from template
+    pom_name = create_pom_file(versions, 'android')
+    pom_name_linux = create_pom_file(versions, 'linux')
 
     # create sources jar
     jar_name = create_sources_jar(versions)
+    jar_name_linux = get_sources_file_name(versions, 'linux')
+    copy(os.path.join(REPO_DIR, jar_name), os.path.join(REPO_DIR, jar_name_linux))
 
-    # create POM file from template
-    pom_name = create_pom_file(versions)
-
-    # print hashes for debug purposes
+    # print Android hashes for debug purposes
     for file in file_list + [zip_name, jar_name, pom_name]:
+        sha256hash = get_sha256(os.path.join(REPO_DIR, file))
+        print("%s: %s" % (file, sha256hash))
+
+    # print Linux hashes for debug purposes
+    for file in file_list_linux + [zip_name_linux, jar_name_linux, pom_name_linux]:
         sha256hash = get_sha256(os.path.join(REPO_DIR, file))
         print("%s: %s" % (file, sha256hash))
 
@@ -121,6 +130,8 @@ def checkout(name, tag, path):
 
 
 def build_architectures():
+    build_linux()
+
     # build arm pie
     os.unsetenv('APP_ABI')
     os.unsetenv('NDK_PLATFORM_LEVEL')
@@ -154,6 +165,89 @@ def build_arch(name):
     check_call(['zip', '-X', name, 'tor'], cwd=REPO_DIR)
 
 
+def build_linux(name='tor_linux-x86_64.zip'):
+    # create folders for static libraries
+    ext_dir = os.path.abspath(os.path.join(REPO_DIR, 'external'))
+    lib_dir = os.path.join(ext_dir, 'lib')
+    if not os.path.exists(lib_dir):
+        os.mkdir(lib_dir)
+    include_dir = os.path.join(ext_dir, 'include')
+    if not os.path.exists(include_dir):
+        os.mkdir(include_dir)
+
+    # setup environment
+    env = os.environ.copy()
+    env['LDFLAGS'] = "-L%s" % ext_dir
+    env['CFLAGS'] = "-fPIC -I%s" % include_dir
+    env['LIBS'] = "-L%s" % lib_dir
+    env['PKG_PATH'] = include_dir
+
+    # ensure clean build environment
+    check_call(['git', 'submodule', 'foreach', 'git', 'clean', '-dffx'], cwd=REPO_DIR)
+
+    # build lzma
+    xz_dir = os.path.join(ext_dir, 'xz')
+    check_call(['./autogen.sh'], cwd=xz_dir)
+    check_call(['./configure', '--disable-shared', '--enable-static', '--disable-doc',
+                '--disable-xz', '--disable-xzdec', '--disable-lzmadec', '--disable-lzmainfo',
+                '--disable-lzma-links', '--disable-scripts', '--prefix=%s' % ext_dir],
+               cwd=xz_dir, env=env)
+    check_call(['make', 'install'], cwd=xz_dir)
+
+    # build zstd
+    zstd_dir = os.path.join(ext_dir, 'zstd', 'lib')
+    check_call(['make', 'libzstd.a-mt'], cwd=zstd_dir)
+    check_call(['make', 'libzstd.pc'], cwd=zstd_dir)
+    copy(os.path.join(zstd_dir, 'libzstd.a'), lib_dir)
+    copy(os.path.join(zstd_dir, 'libzstd.pc'), os.path.join(lib_dir, 'pkgconfig'))
+    copy(os.path.join(zstd_dir, 'zstd.h'), include_dir)
+    copy(os.path.join(zstd_dir, 'common', 'zstd_errors.h'), include_dir)
+    copy(os.path.join(zstd_dir, 'deprecated', 'zbuff.h'), include_dir)
+    copy(os.path.join(zstd_dir, 'dictBuilder', 'zdict.h'), include_dir)
+
+    # build openssl
+    openssl_dir = os.path.join(ext_dir, 'openssl')
+    check_call(['perl', 'Configure', 'linux-x86_64', '-fPIC'], cwd=openssl_dir, env=env)
+    check_call(['make', 'depend'], cwd=openssl_dir)
+    check_call(['make', 'build_libs'], cwd=openssl_dir)
+    copy(os.path.join(openssl_dir, 'libcrypto.a'), os.path.join(lib_dir, 'libcrypto.a'))
+    copy(os.path.join(openssl_dir, 'libssl.a'), os.path.join(lib_dir, 'libssl.a'))
+    copytree(os.path.join(openssl_dir, 'include', 'openssl'), os.path.join(include_dir, 'openssl'))
+
+    # build libevent
+    libevent_dir = os.path.join(REPO_DIR, 'external', 'libevent')
+    check_call(['./autogen.sh'], cwd=libevent_dir)
+    check_call(['./configure', '--disable-shared'], cwd=libevent_dir, env=env)
+    check_call(['make', './include/event2/event-config.h', 'all-am'], cwd=libevent_dir)
+    copy(os.path.join(libevent_dir, '.libs', 'libevent.a'), os.path.join(lib_dir, 'libevent.a'))
+    copytree(os.path.join(libevent_dir, 'include', 'event2'), os.path.join(include_dir, 'event2'))
+
+    # build Tor
+    tor_dir = os.path.join(REPO_DIR, 'external', 'tor')
+    check_call(['./autogen.sh'], cwd=tor_dir)
+    env['CFLAGS'] += ' -O3'  # needed for FORTIFY_SOURCE
+    check_call(['./configure', '--disable-asciidoc', '--disable-systemd',
+                '--enable-static-libevent', '--with-libevent-dir=%s' % ext_dir,
+                '--enable-static-openssl', '--with-openssl-dir=%s' % ext_dir], cwd=tor_dir, env=env)
+    check_call(['make', 'all-am'], cwd=tor_dir)
+
+    # copy and zip built Tor binary
+    tor_path = os.path.join(REPO_DIR, 'tor')
+    copy(os.path.join(tor_dir, 'src', 'or', 'tor'), tor_path)
+    check_call(['strip', '-D', 'tor'], cwd=REPO_DIR)
+    reset_time(tor_path)
+    print("Sha256 hash of tor before zipping %s: %s" % (name, get_sha256(tor_path)))
+    check_call(['zip', '-X', name, 'tor'], cwd=REPO_DIR)
+
+
+def pack(versions, file_list, platform):
+    for filename in file_list:
+        reset_time(os.path.join(REPO_DIR, filename))  # make file times deterministic before zipping
+    zip_name = get_final_file_name(versions, platform)
+    check_call(['zip', '-D', '-X', zip_name] + file_list, cwd=REPO_DIR)
+    return zip_name
+
+
 def reset_time(filename):
     check_call(['touch', '--no-dereference', '-t', '197001010000.00', filename])
 
@@ -174,10 +268,16 @@ def create_sources_jar(versions):
     return jar_name
 
 
-def create_pom_file(versions):
+def create_pom_file(versions, platform='android'):
     tor_version = get_tor_version(versions)
-    pom_name = get_pom_file_name(versions)
-    with open('template.pom', 'rt') as infile:
+    pom_name = get_pom_file_name(versions, platform)
+    if platform == 'android':
+        template = 'template.pom'
+    elif platform == 'linux':
+        template = 'template-linux.pom'
+    else:
+        raise RuntimeError("Unknown platform: %s" % platform)
+    with open(template, 'rt') as infile:
         with open(os.path.join(REPO_DIR, pom_name), 'wt') as outfile:
             for line in infile:
                 outfile.write(line.replace('VERSION', tor_version))

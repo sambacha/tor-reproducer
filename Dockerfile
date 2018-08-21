@@ -11,6 +11,7 @@ ADD install*.sh ./
 ADD tor-versions.json ./
 ADD utils.py ./
 ADD template.pom ./
+ADD template-linux.pom ./
 
 RUN ./install.sh
 
