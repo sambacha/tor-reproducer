@@ -4,7 +4,7 @@
     "libevent": "release-2.0.22-stable",
     "openssl": "OpenSSL_1_0_2o",
     "xz": "v5.2.4",
-    "zstd": "v1.3.4",
+    "zstd": "v1.3.5",
     "tor-android": "tor-android-binary-0.3.3.5-rc-3",
     "tor_android_repo_url": "https://github.com/n8fr8/tor-android",
     "ndk": {

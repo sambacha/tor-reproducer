@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import os
-from shutil import move, copy, rmtree, copytree
+from shutil import move, copy, rmtree
 from subprocess import check_call
 
 from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_tor_version, \
@@ -166,74 +166,70 @@ def build_arch(name):
 
 
 def build_linux(name='tor_linux-x86_64.zip'):
+    # ensure clean build environment (again here to protect against build reordering)
+    check_call(['git', 'clean', '-dffx'], cwd=REPO_DIR)
+    check_call(['git', 'submodule', 'foreach', 'git', 'clean', '-dffx'], cwd=REPO_DIR)
+
     # create folders for static libraries
     ext_dir = os.path.abspath(os.path.join(REPO_DIR, 'external'))
-    lib_dir = os.path.join(ext_dir, 'lib')
+    prefix_dir = os.path.abspath(os.path.join(REPO_DIR, 'prefix'))
+    if not os.path.exists(prefix_dir):
+        os.mkdir(prefix_dir)
+    lib_dir = os.path.join(prefix_dir, 'lib')
     if not os.path.exists(lib_dir):
         os.mkdir(lib_dir)
-    include_dir = os.path.join(ext_dir, 'include')
+    include_dir = os.path.join(prefix_dir, 'include')
     if not os.path.exists(include_dir):
         os.mkdir(include_dir)
 
     # setup environment
     env = os.environ.copy()
-    env['LDFLAGS'] = "-L%s" % ext_dir
+    env['PREFIX'] = prefix_dir
+    env['LDFLAGS'] = "-L%s" % prefix_dir
     env['CFLAGS'] = "-fPIC -I%s" % include_dir
     env['LIBS'] = "-L%s" % lib_dir
     env['PKG_PATH'] = include_dir
-
-    # ensure clean build environment
-    check_call(['git', 'submodule', 'foreach', 'git', 'clean', '-dffx'], cwd=REPO_DIR)
 
     # build lzma
     xz_dir = os.path.join(ext_dir, 'xz')
     check_call(['./autogen.sh'], cwd=xz_dir)
     check_call(['./configure', '--disable-shared', '--enable-static', '--disable-doc',
                 '--disable-xz', '--disable-xzdec', '--disable-lzmadec', '--disable-lzmainfo',
-                '--disable-lzma-links', '--disable-scripts', '--prefix=%s' % ext_dir],
+                '--disable-lzma-links', '--disable-scripts', '--prefix=%s' % prefix_dir],
                cwd=xz_dir, env=env)
-    check_call(['make', 'install'], cwd=xz_dir)
+    check_call(['make', 'install'], cwd=xz_dir, env=env)
 
     # build zstd
     zstd_dir = os.path.join(ext_dir, 'zstd', 'lib')
-    check_call(['make', 'libzstd.a-mt'], cwd=zstd_dir)
-    check_call(['make', 'libzstd.pc'], cwd=zstd_dir)
-    copy(os.path.join(zstd_dir, 'libzstd.a'), lib_dir)
-    copy(os.path.join(zstd_dir, 'libzstd.pc'), os.path.join(lib_dir, 'pkgconfig'))
-    copy(os.path.join(zstd_dir, 'zstd.h'), include_dir)
-    copy(os.path.join(zstd_dir, 'common', 'zstd_errors.h'), include_dir)
-    copy(os.path.join(zstd_dir, 'deprecated', 'zbuff.h'), include_dir)
-    copy(os.path.join(zstd_dir, 'dictBuilder', 'zdict.h'), include_dir)
+    check_call(['make', 'install'], cwd=zstd_dir, env=env)
 
     # build openssl
     openssl_dir = os.path.join(ext_dir, 'openssl')
-    check_call(['perl', 'Configure', 'linux-x86_64', '-fPIC'], cwd=openssl_dir, env=env)
-    check_call(['make', 'depend'], cwd=openssl_dir)
-    check_call(['make', 'build_libs'], cwd=openssl_dir)
-    copy(os.path.join(openssl_dir, 'libcrypto.a'), os.path.join(lib_dir, 'libcrypto.a'))
-    copy(os.path.join(openssl_dir, 'libssl.a'), os.path.join(lib_dir, 'libssl.a'))
-    copytree(os.path.join(openssl_dir, 'include', 'openssl'), os.path.join(include_dir, 'openssl'))
+    check_call(['./config', '--prefix=%s' % prefix_dir], cwd=openssl_dir, env=env)
+    check_call(['make'], cwd=openssl_dir, env=env)
+    check_call(['make', 'install_sw'], cwd=openssl_dir, env=env)
 
     # build libevent
-    libevent_dir = os.path.join(REPO_DIR, 'external', 'libevent')
+    libevent_dir = os.path.join(ext_dir, 'libevent')
     check_call(['./autogen.sh'], cwd=libevent_dir)
-    check_call(['./configure', '--disable-shared'], cwd=libevent_dir, env=env)
-    check_call(['make', './include/event2/event-config.h', 'all-am'], cwd=libevent_dir)
-    copy(os.path.join(libevent_dir, '.libs', 'libevent.a'), os.path.join(lib_dir, 'libevent.a'))
-    copytree(os.path.join(libevent_dir, 'include', 'event2'), os.path.join(include_dir, 'event2'))
+    check_call(['./configure', '--disable-shared', '--prefix=%s' % prefix_dir], cwd=libevent_dir,
+               env=env)
+    check_call(['make'], cwd=libevent_dir, env=env)
+    check_call(['make', 'install'], cwd=libevent_dir, env=env)
 
     # build Tor
-    tor_dir = os.path.join(REPO_DIR, 'external', 'tor')
+    tor_dir = os.path.join(ext_dir, 'tor')
     check_call(['./autogen.sh'], cwd=tor_dir)
     env['CFLAGS'] += ' -O3'  # needed for FORTIFY_SOURCE
     check_call(['./configure', '--disable-asciidoc', '--disable-systemd',
-                '--enable-static-libevent', '--with-libevent-dir=%s' % ext_dir,
-                '--enable-static-openssl', '--with-openssl-dir=%s' % ext_dir], cwd=tor_dir, env=env)
-    check_call(['make', 'all-am'], cwd=tor_dir)
+                '--enable-static-libevent', '--with-libevent-dir=%s' % prefix_dir,
+                '--enable-static-openssl', '--with-openssl-dir=%s' % prefix_dir,
+                '--prefix=%s' % prefix_dir], cwd=tor_dir, env=env)
+    check_call(['make', 'install'], cwd=tor_dir, env=env)
 
     # copy and zip built Tor binary
     tor_path = os.path.join(REPO_DIR, 'tor')
-    copy(os.path.join(tor_dir, 'src', 'or', 'tor'), tor_path)
+    copy(os.path.join(prefix_dir, 'bin', 'tor'), tor_path)
     check_call(['strip', '-D', 'tor'], cwd=REPO_DIR)
     reset_time(tor_path)
     print("Sha256 hash of tor before zipping %s: %s" % (name, get_sha256(tor_path)))
