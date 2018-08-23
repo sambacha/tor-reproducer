@@ -188,20 +188,6 @@ def build_linux(name='tor_linux-x86_64.zip'):
     env['LDFLAGS'] = "-L%s" % prefix_dir
     env['CFLAGS'] = "-fPIC -I%s" % include_dir
     env['LIBS'] = "-L%s" % lib_dir
-    env['PKG_PATH'] = include_dir
-
-    # build lzma
-    xz_dir = os.path.join(ext_dir, 'xz')
-    check_call(['./autogen.sh'], cwd=xz_dir)
-    check_call(['./configure', '--disable-shared', '--enable-static', '--disable-doc',
-                '--disable-xz', '--disable-xzdec', '--disable-lzmadec', '--disable-lzmainfo',
-                '--disable-lzma-links', '--disable-scripts', '--prefix=%s' % prefix_dir],
-               cwd=xz_dir, env=env)
-    check_call(['make', 'install'], cwd=xz_dir, env=env)
-
-    # build zstd
-    zstd_dir = os.path.join(ext_dir, 'zstd', 'lib')
-    check_call(['make', 'install'], cwd=zstd_dir, env=env)
 
     # build openssl
     openssl_dir = os.path.join(ext_dir, 'openssl')
