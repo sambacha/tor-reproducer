@@ -42,13 +42,18 @@ def get_tor_version(versions):
     return versions['tor'].split('-')[1]
 
 
+def get_file_suffix(versions, platform):
+    version = get_tor_version(versions)
+    return "%s-%s" % (platform, version) if platform == "android" else version
+
+
 def get_final_file_name(versions, platform='android'):
-    return 'tor-%s-%s.zip' % (platform, get_tor_version(versions))
+    return 'tor-%s.zip' % get_file_suffix(versions, platform)
 
 
 def get_sources_file_name(versions, platform='android'):
-    return 'tor-%s-%s-sources.jar' % (platform, get_tor_version(versions))
+    return 'tor-%s-sources.jar' % get_file_suffix(versions, platform)
 
 
 def get_pom_file_name(versions, platform='android'):
-    return 'tor-%s-%s.pom' % (platform, get_tor_version(versions))
+    return 'tor-%s.pom' % get_file_suffix(versions, platform)

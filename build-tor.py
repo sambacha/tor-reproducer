@@ -272,11 +272,9 @@ def create_pom_file(versions, platform='android'):
     tor_version = get_tor_version(versions)
     pom_name = get_pom_file_name(versions, platform)
     if platform == 'android':
-        template = 'template.pom'
-    elif platform == 'linux':
-        template = 'template-linux.pom'
+        template = 'template-android.pom'
     else:
-        raise RuntimeError("Unknown platform: %s" % platform)
+        template = 'template.pom'
     with open(template, 'rt') as infile:
         with open(os.path.join(REPO_DIR, pom_name), 'wt') as outfile:
             for line in infile:

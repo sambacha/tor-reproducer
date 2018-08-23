@@ -2,14 +2,14 @@
 <project>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.briarproject</groupId>
-  <artifactId>tor-linux</artifactId>
+  <artifactId>tor-android</artifactId>
   <version>VERSION</version>
-  <url>https://torproject.org</url>
-  <description>Repo for building Tor for Linux.</description>
+  <url>https://github.com/n8fr8/tor-android</url>
+  <description>Repo for building Tor for Android.</description>
   <licenses>
    <license>
      <name>BSD-3-clause</name>
-     <url>https://gitweb.torproject.org/tor.git/tree/LICENSE</url>
+     <url>https://github.com/n8fr8/tor-android/blob/master/LICENSE</url>
    </license>
   </licenses>
   <developers>
@@ -28,10 +28,15 @@
       <name>Tor Project</name>
       <email>frontdesk@rt.torproject.org</email>
     </developer>
+    <developer>
+      <id>n8fr8</id>
+      <name>Nathan Freitas</name>
+      <email>nathan@guardianproject.info</email>
+    </developer>
   </developers>
   <scm>
-    <connection>scm:https://gitweb.torproject.org/tor.git/</connection>
-    <developerConnection>scm:git@gitweb.torproject.org/tor.git</developerConnection>
-    <url>scm:https://gitweb.torproject.org/tor.git</url>
+    <connection>scm:https://github.com/n8fr8/tor-android.git</connection>
+    <developerConnection>scm:git@github.com:n8fr8/tor-android.git</developerConnection>
+    <url>scm:https://github.com/n8fr8/tor-android</url>
   </scm>
 </project>
