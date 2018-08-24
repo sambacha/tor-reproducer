@@ -14,5 +14,4 @@ apt-get install -y --no-install-recommends \
 	libtool \
 	automake \
 	binutils-multiarch \
-	zlib1g-dev \
 	fastjar
