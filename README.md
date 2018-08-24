@@ -70,4 +70,4 @@ Note that this will not work if the issue is caused by an updated Debian package
 
 To build a specific version of Tor for Android, run
 
-    docker run briar/tor-reproducer:latest ./build-tor.py [version]
+    docker run briar/tor-reproducer:latest ./verify-tor.py [version]

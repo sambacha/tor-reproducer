@@ -15,7 +15,7 @@ def main():
     versions = get_build_versions(version)
 
     # download reference binary
-    file_name = get_final_file_name(versions)
+    file_name = get_final_file_name(versions, android=True)
     try:
         # try downloading from jcenter
         check_call(['wget', '--no-verbose', get_url(versions), '-O', file_name])
@@ -49,7 +49,7 @@ def main():
 
 def get_url(versions, fallback=False):
     version = get_tor_version(versions)
-    file = get_final_file_name(versions)
+    file = get_final_file_name(versions, android=True)
     if not fallback:
         return "https://jcenter.bintray.com/org/briarproject/tor-android/%s/%s" % (version, file)
     else:
