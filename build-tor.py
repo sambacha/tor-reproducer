@@ -2,6 +2,7 @@
 import os
 from shutil import move, copy, rmtree
 from subprocess import check_call
+from zipfile import ZipFile
 
 from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_tor_version, \
     get_final_file_name, get_sources_file_name, get_pom_file_name, get_version
@@ -31,6 +32,9 @@ def main():
     geoip_path = os.path.join(REPO_DIR, 'external', 'tor', 'src', 'config', 'geoip')
     reset_time(geoip_path)
     check_call(['zip', '-D', '-X', os.path.join(REPO_DIR, 'geoip.zip'), geoip_path])
+    with ZipFile(os.path.join(REPO_DIR, 'geoip.zip'), 'r') as f:
+        if f.namelist() != ['geoip']:
+            fail("GeoIP zip file includes path: %s" % str(f.namelist()))
 
     # zip binaries together
     file_list = ['tor_linux-x86_64.zip', 'geoip.zip']
