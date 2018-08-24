@@ -7,7 +7,9 @@ from zipfile import ZipFile
 from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_tor_version, \
     get_final_file_name, get_sources_file_name, get_pom_file_name, get_version
 
+ZLIB_REPO_URL = 'https://github.com/madler/zlib.git'
 NDK_DIR = 'android-ndk'
+EXT_DIR = os.path.abspath(os.path.join(REPO_DIR, 'external'))
 
 
 def main():
@@ -119,17 +121,21 @@ def prepare_tor_android_repo(versions):
     check_call(['git', 'clean', '-dffx'], cwd=REPO_DIR)
     check_call(['git', 'submodule', 'foreach', 'git', 'clean', '-dffx'], cwd=REPO_DIR)
 
+    # add zlib
+    check_call(['git', 'clone', ZLIB_REPO_URL], cwd=EXT_DIR)
+
     # check out versions of external dependencies
-    checkout('tor', versions['tor'], 'external/tor')
-    checkout('libevent', versions['libevent'], 'external/libevent')
-    checkout('openssl', versions['openssl'], 'external/openssl')
-    checkout('xz', versions['xz'], 'external/xz')
-    checkout('zstd', versions['zstd'], 'external/zstd')
+    checkout('tor', versions['tor'], 'tor')
+    checkout('libevent', versions['libevent'], 'libevent')
+    checkout('openssl', versions['openssl'], 'openssl')
+    checkout('xz', versions['xz'], 'xz')
+    checkout('zlib', versions['zlib'], 'zlib')
+    checkout('zstd', versions['zstd'], 'zstd')
 
 
 def checkout(name, tag, path):
     print("Checking out %s: %s" % (name, tag))
-    repo_path = os.path.join(REPO_DIR, path)
+    repo_path = os.path.join(EXT_DIR, path)
     check_call(['git', 'checkout', '-f', tag], cwd=repo_path)
 
 
@@ -168,21 +174,19 @@ def build_android_arch(name):
 
 
 def build(name='tor_linux-x86_64.zip'):
+    prefix_dir = os.path.abspath(os.path.join(REPO_DIR, 'prefix'))
+    lib_dir = os.path.join(prefix_dir, 'lib')
+    include_dir = os.path.join(prefix_dir, 'include')
+
     # ensure clean build environment (again here to protect against build reordering)
-    check_call(['git', 'clean', '-dffx'], cwd=REPO_DIR)
     check_call(['git', 'submodule', 'foreach', 'git', 'clean', '-dffx'], cwd=REPO_DIR)
+    if os.path.exists(prefix_dir):
+        rmtree(prefix_dir)
 
     # create folders for static libraries
-    ext_dir = os.path.abspath(os.path.join(REPO_DIR, 'external'))
-    prefix_dir = os.path.abspath(os.path.join(REPO_DIR, 'prefix'))
-    if not os.path.exists(prefix_dir):
-        os.mkdir(prefix_dir)
-    lib_dir = os.path.join(prefix_dir, 'lib')
-    if not os.path.exists(lib_dir):
-        os.mkdir(lib_dir)
-    include_dir = os.path.join(prefix_dir, 'include')
-    if not os.path.exists(include_dir):
-        os.mkdir(include_dir)
+    os.mkdir(prefix_dir)
+    os.mkdir(lib_dir)
+    os.mkdir(include_dir)
 
     # setup environment
     env = os.environ.copy()
@@ -190,14 +194,19 @@ def build(name='tor_linux-x86_64.zip'):
     env['CFLAGS'] = "-fPIC -I%s" % include_dir
     env['LIBS'] = "-L%s" % lib_dir
 
+    # build zlib
+    zlib_dir = os.path.join(EXT_DIR, 'zlib')
+    check_call(['./configure', '--prefix=%s' % prefix_dir], cwd=zlib_dir, env=env)
+    check_call(['make', 'install'], cwd=zlib_dir, env=env)
+
     # build openssl
-    openssl_dir = os.path.join(ext_dir, 'openssl')
+    openssl_dir = os.path.join(EXT_DIR, 'openssl')
     check_call(['./config', '--prefix=%s' % prefix_dir], cwd=openssl_dir, env=env)
     check_call(['make'], cwd=openssl_dir, env=env)
     check_call(['make', 'install_sw'], cwd=openssl_dir, env=env)
 
     # build libevent
-    libevent_dir = os.path.join(ext_dir, 'libevent')
+    libevent_dir = os.path.join(EXT_DIR, 'libevent')
     check_call(['./autogen.sh'], cwd=libevent_dir)
     check_call(['./configure', '--disable-shared', '--prefix=%s' % prefix_dir], cwd=libevent_dir,
                env=env)
@@ -205,10 +214,11 @@ def build(name='tor_linux-x86_64.zip'):
     check_call(['make', 'install'], cwd=libevent_dir, env=env)
 
     # build Tor
-    tor_dir = os.path.join(ext_dir, 'tor')
+    tor_dir = os.path.join(EXT_DIR, 'tor')
     check_call(['./autogen.sh'], cwd=tor_dir)
     env['CFLAGS'] += ' -O3'  # needed for FORTIFY_SOURCE
     check_call(['./configure', '--disable-asciidoc', '--disable-systemd',
+                '--enable-static-zlib', '--with-zlib-dir=%s' % prefix_dir,
                 '--enable-static-libevent', '--with-libevent-dir=%s' % prefix_dir,
                 '--enable-static-openssl', '--with-openssl-dir=%s' % prefix_dir,
                 '--prefix=%s' % prefix_dir], cwd=tor_dir, env=env)
