@@ -2,7 +2,6 @@
 import os
 from shutil import move, copy, rmtree
 from subprocess import check_call
-from zipfile import ZipFile
 
 from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_tor_version, \
     get_final_file_name, get_sources_file_name, get_pom_file_name, get_version
@@ -31,12 +30,10 @@ def main():
     build_android()
 
     # zip geoip database
-    geoip_path = os.path.join(REPO_DIR, 'external', 'tor', 'src', 'config', 'geoip')
+    geoip_path = os.path.join(EXT_DIR, 'tor', 'src', 'config', 'geoip')
     reset_time(geoip_path)
-    check_call(['zip', '-D', '-X', os.path.join(REPO_DIR, 'geoip.zip'), geoip_path])
-    with ZipFile(os.path.join(REPO_DIR, 'geoip.zip'), 'r') as f:
-        if f.namelist() != ['geoip']:
-            fail("GeoIP zip file includes path: %s" % str(f.namelist()))
+    copy(geoip_path, os.path.join(REPO_DIR, 'geoip'))  # copy first to not zip directory
+    check_call(['zip', '-X', os.path.join(REPO_DIR, 'geoip.zip'), os.path.join(REPO_DIR, 'geoip')])
 
     # zip binaries together
     file_list = ['tor_linux-x86_64.zip', 'geoip.zip']
@@ -165,7 +162,7 @@ def build_android():
 
 def build_android_arch(name):
     check_call(['make', '-C', 'external', 'clean', 'tor'], cwd=REPO_DIR)
-    copy(os.path.join(REPO_DIR, 'external', 'bin', 'tor'), os.path.join(REPO_DIR, 'tor'))
+    copy(os.path.join(EXT_DIR, 'bin', 'tor'), os.path.join(REPO_DIR, 'tor'))
     check_call(['strip', '-D', 'tor'], cwd=REPO_DIR)
     tor_path = os.path.join(REPO_DIR, 'tor')
     reset_time(tor_path)
@@ -246,18 +243,17 @@ def reset_time(filename):
 
 
 def create_sources_jar(versions):
-    external_dir = os.path.join(REPO_DIR, 'external')
-    check_call(['git', 'clean', '-dfx'], cwd=external_dir)
+    check_call(['git', 'clean', '-dfx'], cwd=EXT_DIR)
     jar_files = []
-    for root, dir_names, filenames in os.walk(external_dir):
+    for root, dir_names, filenames in os.walk(EXT_DIR):
         for f in filenames:
             jar_files.append(os.path.join(root, f))
     for file in jar_files:
         reset_time(file)
     jar_name = get_sources_file_name(versions)
     jar_path = os.path.abspath(os.path.join(REPO_DIR, jar_name))
-    rel_paths = [os.path.relpath(f, external_dir) for f in sorted(jar_files)]
-    check_call(['jar', 'cf', jar_path] + rel_paths, cwd=external_dir)
+    rel_paths = [os.path.relpath(f, EXT_DIR) for f in sorted(jar_files)]
+    check_call(['jar', 'cf', jar_path] + rel_paths, cwd=EXT_DIR)
     return jar_name
 
 
