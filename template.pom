@@ -2,7 +2,7 @@
 <project>
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.briarproject</groupId>
-  <artifactId>tor-linux</artifactId>
+  <artifactId>tor</artifactId>
   <version>VERSION</version>
   <url>https://torproject.org</url>
   <description>Repo for building Tor for Linux.</description>
