@@ -23,38 +23,38 @@ def main():
     # clone and checkout tor-android repo based on tor-versions.json
     prepare_tor_android_repo(versions)
 
-    # build Tor for various architectures
-    build_architectures()
+    # build Tor for various platforms and architectures
+    build()
+    build_android()
 
     # zip geoip database
     geoip_path = os.path.join(REPO_DIR, 'external', 'tor', 'src', 'config', 'geoip')
     reset_time(geoip_path)
     check_call(['zip', '-D', '-X', os.path.join(REPO_DIR, 'geoip.zip'), geoip_path])
 
+    # zip binaries together
+    file_list = ['tor_linux-x86_64.zip', 'geoip.zip']
+    zip_name = pack(versions, file_list)
     # zip Android binaries together
-    file_list = ['tor_arm_pie.zip', 'tor_arm.zip', 'tor_x86_pie.zip', 'tor_x86.zip', 'geoip.zip']
-    zip_name = pack(versions, file_list, 'android')
-
-    # zip Linux binaries together
-    file_list_linux = ['tor_linux-x86_64.zip', 'geoip.zip']
-    zip_name_linux = pack(versions, file_list_linux, 'linux')
+    file_list_android = ['tor_arm_pie.zip', 'tor_arm.zip', 'tor_x86_pie.zip', 'tor_x86.zip',
+                         'geoip.zip']
+    zip_name_android = pack(versions, file_list_android, android=True)
 
     # create POM file from template
-    pom_name = create_pom_file(versions, 'android')
-    pom_name_linux = create_pom_file(versions, 'linux')
+    pom_name = create_pom_file(versions)
+    pom_name_android = create_pom_file(versions, android=True)
 
     # create sources jar
     jar_name = create_sources_jar(versions)
-    jar_name_linux = get_sources_file_name(versions, 'linux')
-    copy(os.path.join(REPO_DIR, jar_name), os.path.join(REPO_DIR, jar_name_linux))
+    jar_name_android = get_sources_file_name(versions, android=True)
+    copy(os.path.join(REPO_DIR, jar_name), os.path.join(REPO_DIR, jar_name_android))
 
-    # print Android hashes for debug purposes
+    # print hashes for debug purposes
     for file in file_list + [zip_name, jar_name, pom_name]:
         sha256hash = get_sha256(os.path.join(REPO_DIR, file))
         print("%s: %s" % (file, sha256hash))
-
-    # print Linux hashes for debug purposes
-    for file in file_list_linux + [zip_name_linux, jar_name_linux, pom_name_linux]:
+    print("Android:")
+    for file in file_list_android + [zip_name_android, jar_name_android, pom_name_android]:
         sha256hash = get_sha256(os.path.join(REPO_DIR, file))
         print("%s: %s" % (file, sha256hash))
 
@@ -129,33 +129,31 @@ def checkout(name, tag, path):
     check_call(['git', 'checkout', '-f', tag], cwd=repo_path)
 
 
-def build_architectures():
-    build_linux()
-
+def build_android():
     # build arm pie
     os.unsetenv('APP_ABI')
     os.unsetenv('NDK_PLATFORM_LEVEL')
     os.unsetenv('PIEFLAGS')
-    build_arch('tor_arm_pie.zip')
+    build_android_arch('tor_arm_pie.zip')
 
     # build arm
     os.putenv('NDK_PLATFORM_LEVEL', '14')
     os.putenv('PIEFLAGS', '')
-    build_arch('tor_arm.zip')
+    build_android_arch('tor_arm.zip')
 
     # build x86 pie
     os.putenv('APP_ABI', 'x86')
     os.unsetenv('NDK_PLATFORM_LEVEL')
     os.unsetenv('PIEFLAGS')
-    build_arch('tor_x86_pie.zip')
+    build_android_arch('tor_x86_pie.zip')
 
     # build x86
     os.putenv('NDK_PLATFORM_LEVEL', '14')
     os.putenv('PIEFLAGS', '')
-    build_arch('tor_x86.zip')
+    build_android_arch('tor_x86.zip')
 
 
-def build_arch(name):
+def build_android_arch(name):
     check_call(['make', '-C', 'external', 'clean', 'tor'], cwd=REPO_DIR)
     copy(os.path.join(REPO_DIR, 'external', 'bin', 'tor'), os.path.join(REPO_DIR, 'tor'))
     check_call(['strip', '-D', 'tor'], cwd=REPO_DIR)
@@ -165,7 +163,7 @@ def build_arch(name):
     check_call(['zip', '-X', name, 'tor'], cwd=REPO_DIR)
 
 
-def build_linux(name='tor_linux-x86_64.zip'):
+def build(name='tor_linux-x86_64.zip'):
     # ensure clean build environment (again here to protect against build reordering)
     check_call(['git', 'clean', '-dffx'], cwd=REPO_DIR)
     check_call(['git', 'submodule', 'foreach', 'git', 'clean', '-dffx'], cwd=REPO_DIR)
@@ -184,7 +182,6 @@ def build_linux(name='tor_linux-x86_64.zip'):
 
     # setup environment
     env = os.environ.copy()
-    env['PREFIX'] = prefix_dir
     env['LDFLAGS'] = "-L%s" % prefix_dir
     env['CFLAGS'] = "-fPIC -I%s" % include_dir
     env['LIBS'] = "-L%s" % lib_dir
@@ -222,10 +219,10 @@ def build_linux(name='tor_linux-x86_64.zip'):
     check_call(['zip', '-X', name, 'tor'], cwd=REPO_DIR)
 
 
-def pack(versions, file_list, platform):
+def pack(versions, file_list, android=False):
     for filename in file_list:
         reset_time(os.path.join(REPO_DIR, filename))  # make file times deterministic before zipping
-    zip_name = get_final_file_name(versions, platform)
+    zip_name = get_final_file_name(versions, android)
     check_call(['zip', '-D', '-X', zip_name] + file_list, cwd=REPO_DIR)
     return zip_name
 
@@ -250,13 +247,10 @@ def create_sources_jar(versions):
     return jar_name
 
 
-def create_pom_file(versions, platform='android'):
+def create_pom_file(versions, android=False):
     tor_version = get_tor_version(versions)
-    pom_name = get_pom_file_name(versions, platform)
-    if platform == 'android':
-        template = 'template-android.pom'
-    else:
-        template = 'template.pom'
+    pom_name = get_pom_file_name(versions, android)
+    template = 'template-android.pom' if android else 'template.pom'
     with open(template, 'rt') as infile:
         with open(os.path.join(REPO_DIR, pom_name), 'wt') as outfile:
             for line in infile:
