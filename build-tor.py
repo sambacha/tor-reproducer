@@ -30,10 +30,10 @@ def main():
     build_android()
 
     # zip geoip database
-    geoip_path = os.path.join(EXT_DIR, 'tor', 'src', 'config', 'geoip')
+    geoip_path = os.path.join(REPO_DIR, 'geoip')
+    copy(os.path.join(EXT_DIR, 'tor', 'src', 'config', 'geoip'), geoip_path)
     reset_time(geoip_path)
-    copy(geoip_path, os.path.join(REPO_DIR, 'geoip'))  # copy first to not zip directory
-    check_call(['zip', '-X', os.path.join(REPO_DIR, 'geoip.zip'), os.path.join(REPO_DIR, 'geoip')])
+    check_call(['zip', '-X', 'geoip.zip', 'geoip'], cwd=REPO_DIR)
 
     # zip binaries together
     file_list = ['tor_linux-x86_64.zip', 'geoip.zip']
