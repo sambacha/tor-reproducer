@@ -105,10 +105,14 @@ def prepare_tor_android_repo(versions):
     else:
         # clone repo
         url = versions['tor_android_repo_url']
-        check_call(['git', 'clone', '--recurse-submodules', url, REPO_DIR])
+        check_call(['git', 'clone', url, REPO_DIR])
 
     # checkout tor-android version
     check_call(['git', 'checkout', '-f', versions['tor-android']], cwd=REPO_DIR)
+
+    # initialize and/or update submodules
+    # (after checkout, because submodules can point to non-existent commits on master)
+    check_call(['git', 'submodule', 'update', '--init', '--recursive'], cwd=REPO_DIR)
 
     # undo all changes
     check_call(['git', 'reset', '--hard'], cwd=REPO_DIR)
