@@ -21,15 +21,14 @@ build:
     - docker build -t ${TEST_IMAGE} .
     - docker push $TEST_IMAGE
 
-# TODO unify with test_verify once latest stable release was uploaded to jcenter
 test_build:
   stage: test
   script:
-    - docker run ${TEST_IMAGE} ./build-tor.py
+    - docker run ${TEST_IMAGE} ./build-tor.py && ./verify-tor.py
   except:
     - tags
 
-test_verify:
+test_tag:
   stage: test
   script:
     - docker run ${TEST_IMAGE} ./verify-tor.py ${CI_BUILD_REF_NAME}
