@@ -27,7 +27,7 @@ and continue once it is installed.
 If you trust that our pre-built Docker image was build exactly from *its* source,
 you can use it for faster verification.
 If not, you can read the next section to learn how to build the image yourself.
-Then you are only trusting the official `debian:stable` which is out of our control.
+Then you are only trusting the official `debian:stable` image which is out of our control.
 
 Otherwise, you can skip the next section and move directly to *Run the verification*.
 
@@ -43,7 +43,7 @@ Build our Docker image:
 
 ### Run the verification
 
-To verify a specific version of Tor for Android, run
+To verify a specific version of Tor, run
 
     docker run briar/tor-reproducer:latest ./verify-tor.py [version]
 
@@ -60,7 +60,7 @@ In case there is an issue with the verification of an old build,
 this *might* be caused by an update of the container.
 You can try to use the original container by running:
 
-    docker run briar/tor-reproducer:[version] ./build-tor.py [version]
+    docker run briar/tor-reproducer:[version] ./verify-tor.py [version]
 
 There should be a tag with the name `[version]` in this repository
 that you could be used to reproduce the old container.
@@ -68,6 +68,6 @@ Note that this will not work if the issue is caused by an updated Debian package
 
 ### Only build Tor
 
-To build a specific version of Tor for Android, run
+To build a specific version of Tor, run
 
-    docker run briar/tor-reproducer:latest ./verify-tor.py [version]
+    docker run briar/tor-reproducer:latest ./build-tor.py [version]
