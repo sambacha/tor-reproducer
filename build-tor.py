@@ -27,8 +27,6 @@ def main():
 
     # create sources jar before building
     jar_name = create_sources_jar(versions)
-    jar_name_android = get_sources_file_name(versions, android=True)
-    copy(jar_name, jar_name_android)
 
     # build Tor for various platforms and architectures
     build()
@@ -38,7 +36,7 @@ def main():
     geoip_path = os.path.join(REPO_DIR, 'geoip')
     copy(os.path.join(EXT_DIR, 'tor', 'src', 'config', 'geoip'), geoip_path)
     reset_time(geoip_path)
-    check_call(['zip', '-X', 'geoip.zip', 'geoip'], cwd=REPO_DIR)
+    check_call(['zip', '-X', '../geoip.zip', 'geoip'], cwd=REPO_DIR)
 
     # zip binaries together
     file_list = ['tor_linux-x86_64.zip', 'geoip.zip']
@@ -54,11 +52,11 @@ def main():
 
     # print hashes for debug purposes
     for file in file_list + [zip_name, jar_name, pom_name]:
-        sha256hash = get_sha256(os.path.join(REPO_DIR, file))
+        sha256hash = get_sha256(file)
         print("%s: %s" % (file, sha256hash))
     print("Android:")
-    for file in file_list_android + [zip_name_android, jar_name_android, pom_name_android]:
-        sha256hash = get_sha256(os.path.join(REPO_DIR, file))
+    for file in file_list_android + [zip_name_android, pom_name_android]:
+        sha256hash = get_sha256(file)
         print("%s: %s" % (file, sha256hash))
 
 
@@ -171,7 +169,7 @@ def build_android_arch(name):
     tor_path = os.path.join(REPO_DIR, 'tor')
     reset_time(tor_path)
     print("Sha256 hash of tor before zipping %s: %s" % (name, get_sha256(tor_path)))
-    check_call(['zip', '-X', name, 'tor'], cwd=REPO_DIR)
+    check_call(['zip', '-X', '../' + name, 'tor'], cwd=REPO_DIR)
 
 
 def build(name='tor_linux-x86_64.zip'):
@@ -231,14 +229,14 @@ def build(name='tor_linux-x86_64.zip'):
     check_call(['strip', '-D', 'tor'], cwd=REPO_DIR)
     reset_time(tor_path)
     print("Sha256 hash of tor before zipping %s: %s" % (name, get_sha256(tor_path)))
-    check_call(['zip', '-X', name, 'tor'], cwd=REPO_DIR)
+    check_call(['zip', '-X', '../' + name, 'tor'], cwd=REPO_DIR)
 
 
 def pack(versions, file_list, android=False):
     for filename in file_list:
-        reset_time(os.path.join(REPO_DIR, filename))  # make file times deterministic before zipping
+        reset_time(filename)  # make file times deterministic before zipping
     zip_name = get_final_file_name(versions, android)
-    check_call(['zip', '-D', '-X', zip_name] + file_list, cwd=REPO_DIR)
+    check_call(['zip', '-D', '-X', zip_name] + file_list)
     return zip_name
 
 
