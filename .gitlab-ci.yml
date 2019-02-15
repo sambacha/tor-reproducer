@@ -24,7 +24,7 @@ build:
 test_build:
   stage: test
   script:
-    - docker run ${TEST_IMAGE} /bin/bash -c "./build-tor.py && ./verify-tor.py"
+    - docker run -v `pwd`:/opt/tor-reproducer ${TEST_IMAGE} /bin/bash -c "./build-tor.py && ./verify-tor.py"
   artifacts:
     paths:
     - tor-*.zip
@@ -39,7 +39,7 @@ test_build:
 test_tag:
   stage: test
   script:
-    - docker run ${TEST_IMAGE} ./verify-tor.py ${CI_BUILD_REF_NAME}
+    - docker run -v `pwd`:/opt/tor-reproducer ${TEST_IMAGE} ./verify-tor.py ${CI_BUILD_REF_NAME}
   artifacts:
     paths:
     - tor-*.zip

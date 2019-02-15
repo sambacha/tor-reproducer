@@ -25,6 +25,11 @@ def main():
     # clone and checkout tor-android repo based on tor-versions.json
     prepare_tor_android_repo(versions)
 
+    # create sources jar before building
+    jar_name = create_sources_jar(versions)
+    jar_name_android = get_sources_file_name(versions, android=True)
+    copy(jar_name, jar_name_android)
+
     # build Tor for various platforms and architectures
     build()
     build_android()
@@ -46,11 +51,6 @@ def main():
     # create POM file from template
     pom_name = create_pom_file(versions)
     pom_name_android = create_pom_file(versions, android=True)
-
-    # create sources jar
-    jar_name = create_sources_jar(versions)
-    jar_name_android = get_sources_file_name(versions, android=True)
-    copy(os.path.join(REPO_DIR, jar_name), os.path.join(REPO_DIR, jar_name_android))
 
     # print hashes for debug purposes
     for file in file_list + [zip_name, jar_name, pom_name]:
@@ -247,8 +247,6 @@ def reset_time(filename):
 
 
 def create_sources_jar(versions):
-    check_call(['git', 'clean', '-dfx'], cwd=EXT_DIR)
-    check_call(['git', 'clean', '-dfx'], cwd=os.path.join(EXT_DIR, 'zlib'))
     jar_files = []
     for root, dir_names, filenames in os.walk(EXT_DIR):
         for f in filenames:
@@ -256,7 +254,7 @@ def create_sources_jar(versions):
     for file in jar_files:
         reset_time(file)
     jar_name = get_sources_file_name(versions)
-    jar_path = os.path.abspath(os.path.join(REPO_DIR, jar_name))
+    jar_path = os.path.abspath(jar_name)
     rel_paths = [os.path.relpath(f, EXT_DIR) for f in sorted(jar_files)]
     check_call(['jar', 'cf', jar_path] + rel_paths, cwd=EXT_DIR)
     return jar_name
@@ -267,7 +265,7 @@ def create_pom_file(versions, android=False):
     pom_name = get_pom_file_name(versions, android)
     template = 'template-android.pom' if android else 'template.pom'
     with open(template, 'rt') as infile:
-        with open(os.path.join(REPO_DIR, pom_name), 'wt') as outfile:
+        with open(pom_name, 'wt') as outfile:
             for line in infile:
                 outfile.write(line.replace('VERSION', tor_version))
     return pom_name
