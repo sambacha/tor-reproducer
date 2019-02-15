@@ -25,6 +25,12 @@ test_build:
   stage: test
   script:
     - docker run ${TEST_IMAGE} /bin/bash -c "./build-tor.py && ./verify-tor.py"
+  artifacts:
+    paths:
+    - tor-*.zip
+    - tor-*.pom
+    - tor-*-sources.jar
+    expire_in: 1 week
   except:
     - tags
 
@@ -32,6 +38,12 @@ test_tag:
   stage: test
   script:
     - docker run ${TEST_IMAGE} ./verify-tor.py ${CI_BUILD_REF_NAME}
+  artifacts:
+    paths:
+    - tor-*.zip
+    - tor-*.pom
+    - tor-*-sources.jar
+    expire_in: 1 week
   only:
     - tags
 
