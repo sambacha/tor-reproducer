@@ -248,6 +248,8 @@ def create_sources_jar(versions):
     jar_files = []
     for root, dir_names, filenames in os.walk(EXT_DIR):
         for f in filenames:
+            if '/.git' in root:
+                continue
             jar_files.append(os.path.join(root, f))
     for file in jar_files:
         reset_time(file)
