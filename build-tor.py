@@ -248,6 +248,7 @@ def reset_time(filename):
 
 def create_sources_jar(versions):
     check_call(['git', 'clean', '-dfx'], cwd=EXT_DIR)
+    check_call(['git', 'clean', '-dfx'], cwd=os.path.join(EXT_DIR, 'zlib'))
     jar_files = []
     for root, dir_names, filenames in os.walk(EXT_DIR):
         for f in filenames:
