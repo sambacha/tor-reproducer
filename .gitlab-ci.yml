@@ -31,6 +31,7 @@ test_build:
     - tor-*.pom
     - tor-*-sources.jar
     expire_in: 1 week
+    when: always
   allow_failure: true
   except:
     - tags
@@ -45,6 +46,7 @@ test_tag:
     - tor-*.pom
     - tor-*-sources.jar
     expire_in: 1 week
+    when: always
   only:
     - tags
 
