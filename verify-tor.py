@@ -3,8 +3,10 @@ import os
 import sys
 from subprocess import check_call, CalledProcessError
 
-from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_final_file_name, \
+from utils import REPO_DIR, get_sha256, get_build_versions, get_final_file_name, \
     get_version, get_tor_version
+
+REF_DIR = "reference"
 
 
 def main():
@@ -22,19 +24,20 @@ def verify(version, for_android):
     versions = get_build_versions(version)
 
     # download reference binary
+    os.makedirs(REF_DIR, exist_ok=True)
     file_name = get_final_file_name(versions, for_android)
+    ref_file = os.path.join(REF_DIR, file_name)
     try:
         # try downloading from jcenter
-        check_call(['wget', '--no-verbose', get_url(versions, for_android), '-O', file_name])
+        check_call(['wget', '--no-verbose', get_url(versions, for_android), '-O', ref_file])
     except CalledProcessError:
         # try fallback to bintray
         print("Warning: Download from jcenter failed. Trying bintray directly...")
         check_call(['wget', '--no-verbose', get_url(versions, for_android, fallback=True), '-O',
-                    file_name])
+                    ref_file])
 
     # check if Tor was already build
-    build_file_name = os.path.join(REPO_DIR, file_name)
-    if not os.path.isfile(build_file_name):
+    if not os.path.isfile(file_name):
         # build Tor
         if version is None:
             check_call(['./build-tor.py'])
@@ -42,8 +45,8 @@ def verify(version, for_android):
             check_call(['./build-tor.py', version])
 
     # calculate hashes for both files
-    reference_hash = get_sha256(file_name)
-    build_hash = get_sha256(build_file_name)
+    reference_hash = get_sha256(ref_file)
+    build_hash = get_sha256(file_name)
     print("Reference sha256: %s" % reference_hash)
     print("Build sha256:     %s" % build_hash)
 
