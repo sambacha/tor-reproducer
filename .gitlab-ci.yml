@@ -24,14 +24,29 @@ build:
 test_build:
   stage: test
   script:
-    - docker run ${TEST_IMAGE} /bin/bash -c "./build-tor.py && ./verify-tor.py"
+    - docker run -v `pwd`:/opt/tor-reproducer ${TEST_IMAGE} /bin/bash -c "./build-tor.py && ./verify-tor.py"
+  artifacts:
+    paths:
+    - tor-*.zip
+    - tor-*.pom
+    - tor-*-sources.jar
+    expire_in: 1 week
+    when: always
+  allow_failure: true
   except:
     - tags
 
 test_tag:
   stage: test
   script:
-    - docker run ${TEST_IMAGE} ./verify-tor.py ${CI_BUILD_REF_NAME}
+    - docker run -v `pwd`:/opt/tor-reproducer ${TEST_IMAGE} ./verify-tor.py ${CI_BUILD_REF_NAME}
+  artifacts:
+    paths:
+    - tor-*.zip
+    - tor-*.pom
+    - tor-*-sources.jar
+    expire_in: 1 week
+    when: always
   only:
     - tags
 
@@ -41,5 +56,6 @@ release:
     - docker pull $TEST_IMAGE
     - docker tag $TEST_IMAGE $RELEASE_IMAGE
     - docker push $RELEASE_IMAGE
+  when: on_success
   only:
     - master
