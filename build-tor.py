@@ -3,7 +3,7 @@ import os
 from shutil import move, copy, rmtree
 from subprocess import check_call
 
-from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_tor_version, \
+from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_version_tag, \
     get_final_file_name, get_sources_file_name, get_pom_file_name, get_version
 
 ZLIB_REPO_URL = 'https://github.com/madler/zlib.git'
@@ -281,13 +281,13 @@ def create_sources_jar(versions):
 
 
 def create_pom_file(versions, android=False):
-    tor_version = get_tor_version(versions)
+    version = get_version_tag(versions)
     pom_name = get_pom_file_name(versions, android)
     template = 'template-android.pom' if android else 'template.pom'
     with open(template, 'rt') as infile:
         with open(pom_name, 'wt') as outfile:
             for line in infile:
-                outfile.write(line.replace('VERSION', tor_version))
+                outfile.write(line.replace('VERSION', version))
     return pom_name
 
 

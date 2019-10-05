@@ -3,8 +3,8 @@ import os
 import sys
 from subprocess import check_call, CalledProcessError
 
-from utils import REPO_DIR, get_sha256, get_build_versions, get_final_file_name, \
-    get_version, get_tor_version
+from utils import get_sha256, get_build_versions, get_final_file_name, \
+    get_version, get_version_tag
 
 REF_DIR = "reference"
 
@@ -53,7 +53,7 @@ def verify(version, for_android):
     # compare hashes
     suffix = " for Android" if for_android else ""
     if reference_hash == build_hash:
-        print("Tor%s version %s was successfully verified! \o/" % (suffix, versions['tor']))
+        print("Tor%s version %s was successfully verified! \\o/" % (suffix, versions['tor']))
         return True
     else:
         print("Hashes for Tor%s version %s do not match! :(" % (suffix, versions['tor']))
@@ -61,7 +61,7 @@ def verify(version, for_android):
 
 
 def get_url(versions, for_android, fallback=False):
-    version = get_tor_version(versions)
+    version = get_version_tag(versions)
     directory = "tor-android" if for_android else "tor"
     file = get_final_file_name(versions, for_android)
     if not fallback:
