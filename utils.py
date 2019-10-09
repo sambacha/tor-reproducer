@@ -22,6 +22,7 @@ def get_build_versions(tag):
     if tag is None:
         # take top-most Tor version
         tag = next(iter(versions))
+    versions[tag]['tag'] = tag
     return versions[tag]
 
 
@@ -38,12 +39,12 @@ def get_sha256(filename, block_size=65536):
     return sha256.hexdigest()
 
 
-def get_tor_version(versions):
-    return versions['tor'].split('-')[1]
+def get_version_tag(versions):
+    return versions['tag']
 
 
 def get_file_suffix(versions, android=False):
-    version = get_tor_version(versions)
+    version = get_version_tag(versions)
     return "%s-%s" % ("android", version) if android else version
 
 

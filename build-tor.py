@@ -3,7 +3,7 @@ import os
 from shutil import move, copy, rmtree
 from subprocess import check_call
 
-from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_tor_version, \
+from utils import REPO_DIR, get_sha256, fail, get_build_versions, get_version_tag, \
     get_final_file_name, get_sources_file_name, get_pom_file_name, get_version
 
 ZLIB_REPO_URL = 'https://github.com/madler/zlib.git'
@@ -42,7 +42,8 @@ def main():
     file_list = ['tor_linux-x86_64.zip', 'geoip.zip']
     zip_name = pack(versions, file_list)
     # zip Android binaries together
-    file_list_android = ['tor_arm_pie.zip', 'tor_arm.zip', 'tor_x86_pie.zip', 'tor_x86.zip',
+    file_list_android = ['tor_arm.zip', 'tor_arm_pie.zip', 'tor_arm64_pie.zip',
+                         'tor_x86.zip', 'tor_x86_pie.zip', 'tor_x86_64_pie.zip',
                          'geoip.zip']
     zip_name_android = pack(versions, file_list_android, android=True)
 
@@ -93,7 +94,7 @@ def setup_android_ndk(versions):
         else:
             fail("Could not extract NDK: %s" % str(content))
 
-    os.putenv('ANDROID_NDK_HOME', os.path.abspath(NDK_DIR))
+    os.environ['ANDROID_NDK_HOME'] = os.path.abspath(NDK_DIR)
 
 
 def prepare_tor_android_repo(versions):
@@ -139,31 +140,50 @@ def checkout(name, tag, path):
 
 
 def build_android():
-    # build arm pie
-    os.unsetenv('APP_ABI')
-    os.unsetenv('NDK_PLATFORM_LEVEL')
-    os.unsetenv('PIEFLAGS')
-    build_android_arch('tor_arm_pie.zip')
+    os.environ.pop("PIEFLAGS", None)  # uses default PIE flags, if not present
 
     # build arm
-    os.putenv('NDK_PLATFORM_LEVEL', '14')
-    os.putenv('PIEFLAGS', '')
-    build_android_arch('tor_arm.zip')
+    env = os.environ.copy()
+    env['APP_ABI'] = "armeabi-v7a"
+    env['NDK_PLATFORM_LEVEL'] = "14"
+    env['PIEFLAGS'] = ""  # do not use default PIE flags
+    build_android_arch('tor_arm.zip', env)
 
-    # build x86 pie
-    os.putenv('APP_ABI', 'x86')
-    os.unsetenv('NDK_PLATFORM_LEVEL')
-    os.unsetenv('PIEFLAGS')
-    build_android_arch('tor_x86_pie.zip')
+    # build arm pie
+    env = os.environ.copy()
+    env['APP_ABI'] = "armeabi-v7a"
+    env['NDK_PLATFORM_LEVEL'] = "16"  # first level supporting PIE
+    build_android_arch('tor_arm_pie.zip', env)
+
+    # build arm64 pie
+    env = os.environ.copy()
+    env['APP_ABI'] = "arm64-v8a"
+    env['NDK_PLATFORM_LEVEL'] = "21"  # first level supporting 64-bit
+    build_android_arch('tor_arm64_pie.zip', env)
 
     # build x86
-    os.putenv('NDK_PLATFORM_LEVEL', '14')
-    os.putenv('PIEFLAGS', '')
-    build_android_arch('tor_x86.zip')
+    env = os.environ.copy()
+    env['APP_ABI'] = "x86"
+    env['NDK_PLATFORM_LEVEL'] = "14"
+    env['PIEFLAGS'] = ""  # do not use default PIE flags
+    build_android_arch('tor_x86.zip', env)
+
+    # build x86 pie
+    env = os.environ.copy()
+    env['APP_ABI'] = "x86"
+    env['NDK_PLATFORM_LEVEL'] = "16"  # first level supporting PIE
+    build_android_arch('tor_x86_pie.zip', env)
+
+    # build x86_64 pie
+    env = os.environ.copy()
+    env['APP_ABI'] = "x86_64"
+    env['NDK_PLATFORM_LEVEL'] = "21"  # first level supporting 64-bit
+    build_android_arch('tor_x86_64_pie.zip', env)
 
 
-def build_android_arch(name):
-    check_call(['make', '-C', 'external', 'clean', 'tor'], cwd=REPO_DIR)
+def build_android_arch(name, env):
+    print("Building %s" % name)
+    check_call(['make', '-C', 'external', 'clean', 'tor'], cwd=REPO_DIR, env=env)
     copy(os.path.join(EXT_DIR, 'bin', 'tor'), os.path.join(REPO_DIR, 'tor'))
     check_call(['strip', '-D', 'tor'], cwd=REPO_DIR)
     tor_path = os.path.join(REPO_DIR, 'tor')
@@ -261,13 +281,13 @@ def create_sources_jar(versions):
 
 
 def create_pom_file(versions, android=False):
-    tor_version = get_tor_version(versions)
+    version = get_version_tag(versions)
     pom_name = get_pom_file_name(versions, android)
     template = 'template-android.pom' if android else 'template.pom'
     with open(template, 'rt') as infile:
         with open(pom_name, 'wt') as outfile:
             for line in infile:
-                outfile.write(line.replace('VERSION', tor_version))
+                outfile.write(line.replace('VERSION', version))
     return pom_name
 
 
