@@ -2,7 +2,7 @@
   "0.4.3.6": {
     "tor": "tor-0.4.3.6",
     "libevent": "release-2.1.12-stable",
-    "openssl": "OpenSSL_1_0_2u",
+    "openssl": "OpenSSL_1_1_1g",
     "xz": "v5.2.4",
     "zlib": "v1.2.11",
     "zstd": "v1.3.8",
