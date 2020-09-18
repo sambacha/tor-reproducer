@@ -14,4 +14,7 @@ apt-get install -y --no-install-recommends \
 	libtool \
 	automake \
 	binutils-multiarch \
-	fastjar
+	fastjar \
+	gcc-aarch64-linux-gnu \
+	perl \
+	autopoint
