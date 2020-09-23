@@ -273,8 +273,8 @@ def pack(versions, file_list, android=False):
 
 
 def reset_time(filename, versions):
-    timestamp = versions['timestamp']
-    if timestamp is None: timestamp = '197001010000.00'
+    if 'timestamp' in versions: timestamp = versions['timestamp']
+    else: timestamp = '197001010000.00'
     check_call(['touch', '--no-dereference', '-t', timestamp, filename])
 
 
