@@ -16,5 +16,5 @@ apt-get install -y --no-install-recommends \
 	binutils-multiarch \
 	fastjar \
 	gcc-aarch64-linux-gnu \
-	perl \
-	autopoint
+	libc6-dev-arm64-cross \
+	perl
