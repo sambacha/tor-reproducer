@@ -29,17 +29,17 @@ def main():
     jar_name = create_sources_jar(versions)
 
     # build Tor for various platforms and architectures
-    build()
-    build_android()
+    build_linux(versions)
+    build_android(versions)
 
     # zip geoip database
     geoip_path = os.path.join(REPO_DIR, 'geoip')
     copy(os.path.join(EXT_DIR, 'tor', 'src', 'config', 'geoip'), geoip_path)
-    reset_time(geoip_path)
+    reset_time(geoip_path, versions)
     check_call(['zip', '-X', '../geoip.zip', 'geoip'], cwd=REPO_DIR)
 
     # zip binaries together
-    file_list = ['tor_linux-x86_64.zip', 'geoip.zip']
+    file_list = ['tor_linux-aarch64.zip', 'tor_linux-x86_64.zip', 'geoip.zip']
     zip_name = pack(versions, file_list)
     # zip Android binaries together
     file_list_android = ['tor_arm.zip', 'tor_arm_pie.zip', 'tor_arm64_pie.zip',
@@ -139,7 +139,7 @@ def checkout(name, tag, path):
     check_call(['git', 'checkout', '-f', tag], cwd=repo_path)
 
 
-def build_android():
+def build_android(versions):
     os.environ.pop("PIEFLAGS", None)  # uses default PIE flags, if not present
 
     # build arm
@@ -147,52 +147,59 @@ def build_android():
     env['APP_ABI'] = "armeabi-v7a"
     env['NDK_PLATFORM_LEVEL'] = "14"
     env['PIEFLAGS'] = ""  # do not use default PIE flags
-    build_android_arch('tor_arm.zip', env)
+    build_android_arch('tor_arm.zip', env, versions)
 
     # build arm pie
     env = os.environ.copy()
     env['APP_ABI'] = "armeabi-v7a"
     env['NDK_PLATFORM_LEVEL'] = "16"  # first level supporting PIE
-    build_android_arch('tor_arm_pie.zip', env)
+    build_android_arch('tor_arm_pie.zip', env, versions)
 
     # build arm64 pie
     env = os.environ.copy()
     env['APP_ABI'] = "arm64-v8a"
     env['NDK_PLATFORM_LEVEL'] = "21"  # first level supporting 64-bit
-    build_android_arch('tor_arm64_pie.zip', env)
+    build_android_arch('tor_arm64_pie.zip', env, versions)
 
     # build x86
     env = os.environ.copy()
     env['APP_ABI'] = "x86"
     env['NDK_PLATFORM_LEVEL'] = "14"
     env['PIEFLAGS'] = ""  # do not use default PIE flags
-    build_android_arch('tor_x86.zip', env)
+    build_android_arch('tor_x86.zip', env, versions)
 
     # build x86 pie
     env = os.environ.copy()
     env['APP_ABI'] = "x86"
     env['NDK_PLATFORM_LEVEL'] = "16"  # first level supporting PIE
-    build_android_arch('tor_x86_pie.zip', env)
+    build_android_arch('tor_x86_pie.zip', env, versions)
 
     # build x86_64 pie
     env = os.environ.copy()
     env['APP_ABI'] = "x86_64"
     env['NDK_PLATFORM_LEVEL'] = "21"  # first level supporting 64-bit
-    build_android_arch('tor_x86_64_pie.zip', env)
+    build_android_arch('tor_x86_64_pie.zip', env, versions)
 
 
-def build_android_arch(name, env):
+def build_android_arch(name, env, versions):
     print("Building %s" % name)
     check_call(['make', '-C', 'external', 'clean', 'tor'], cwd=REPO_DIR, env=env)
     copy(os.path.join(EXT_DIR, 'bin', 'tor'), os.path.join(REPO_DIR, 'tor'))
     check_call(['strip', '-D', 'tor'], cwd=REPO_DIR)
     tor_path = os.path.join(REPO_DIR, 'tor')
-    reset_time(tor_path)
+    reset_time(tor_path, versions)
     print("Sha256 hash of tor before zipping %s: %s" % (name, get_sha256(tor_path)))
     check_call(['zip', '-X', '../' + name, 'tor'], cwd=REPO_DIR)
 
 
-def build(name='tor_linux-x86_64.zip'):
+def build_linux(versions):
+    build_linux_arch('aarch64', 'armv8-a', versions)
+    build_linux_arch('x86_64', 'x86-64', versions)
+
+
+def build_linux_arch(arch, gcc_arch, versions):
+    name="tor_linux-%s.zip" % arch
+    print("Building %s" % name)
     prefix_dir = os.path.abspath(os.path.join(REPO_DIR, 'prefix'))
     lib_dir = os.path.join(prefix_dir, 'lib')
     include_dir = os.path.join(prefix_dir, 'include')
@@ -211,7 +218,8 @@ def build(name='tor_linux-x86_64.zip'):
     env = os.environ.copy()
     env['LDFLAGS'] = "-L%s" % prefix_dir
     env['CFLAGS'] = "-fPIC -I%s" % include_dir
-    env['LIBS'] = "-L%s" % lib_dir
+    env['LIBS'] = "-ldl -L%s" % lib_dir
+    env['CC'] = "%s-linux-gnu-gcc" % arch
 
     # build zlib
     zlib_dir = os.path.join(EXT_DIR, 'zlib')
@@ -220,15 +228,17 @@ def build(name='tor_linux-x86_64.zip'):
 
     # build openssl
     openssl_dir = os.path.join(EXT_DIR, 'openssl')
-    check_call(['./config', '--prefix=%s' % prefix_dir], cwd=openssl_dir, env=env)
+    check_call(['perl', 'Configure', '--prefix=%s' % prefix_dir,
+                '--openssldir=%s' % prefix_dir, '-march=%s' % gcc_arch,
+                'linux-%s' % arch], cwd=openssl_dir, env=env)
     check_call(['make'], cwd=openssl_dir, env=env)
     check_call(['make', 'install_sw'], cwd=openssl_dir, env=env)
 
     # build libevent
     libevent_dir = os.path.join(EXT_DIR, 'libevent')
     check_call(['./autogen.sh'], cwd=libevent_dir)
-    check_call(['./configure', '--disable-shared', '--prefix=%s' % prefix_dir], cwd=libevent_dir,
-               env=env)
+    check_call(['./configure', '--disable-shared', '--prefix=%s' % prefix_dir,
+                '--host=%s' % arch], cwd=libevent_dir, env=env)
     check_call(['make'], cwd=libevent_dir, env=env)
     check_call(['make', 'install'], cwd=libevent_dir, env=env)
 
@@ -240,28 +250,32 @@ def build(name='tor_linux-x86_64.zip'):
                 '--enable-static-zlib', '--with-zlib-dir=%s' % prefix_dir,
                 '--enable-static-libevent', '--with-libevent-dir=%s' % prefix_dir,
                 '--enable-static-openssl', '--with-openssl-dir=%s' % prefix_dir,
-                '--prefix=%s' % prefix_dir], cwd=tor_dir, env=env)
+                '--prefix=%s' % prefix_dir, '--host=%s' % arch,
+                '--disable-tool-name-check'], cwd=tor_dir, env=env)
     check_call(['make', 'install'], cwd=tor_dir, env=env)
 
     # copy and zip built Tor binary
     tor_path = os.path.join(REPO_DIR, 'tor')
     copy(os.path.join(prefix_dir, 'bin', 'tor'), tor_path)
     check_call(['strip', '-D', 'tor'], cwd=REPO_DIR)
-    reset_time(tor_path)
+    reset_time(tor_path, versions)
     print("Sha256 hash of tor before zipping %s: %s" % (name, get_sha256(tor_path)))
     check_call(['zip', '-X', '../' + name, 'tor'], cwd=REPO_DIR)
 
 
 def pack(versions, file_list, android=False):
+    # make file times deterministic before zipping
     for filename in file_list:
-        reset_time(filename)  # make file times deterministic before zipping
+        reset_time(filename, versions)
     zip_name = get_final_file_name(versions, android)
     check_call(['zip', '-D', '-X', zip_name] + file_list)
     return zip_name
 
 
-def reset_time(filename):
-    check_call(['touch', '--no-dereference', '-t', '197001010000.00', filename])
+def reset_time(filename, versions):
+    if 'timestamp' in versions: timestamp = versions['timestamp']
+    else: timestamp = '197001010000.00'
+    check_call(['touch', '--no-dereference', '-t', timestamp, filename])
 
 
 def create_sources_jar(versions):
@@ -272,7 +286,7 @@ def create_sources_jar(versions):
                 continue
             jar_files.append(os.path.join(root, f))
     for file in jar_files:
-        reset_time(file)
+        reset_time(file, versions)
     jar_name = get_sources_file_name(versions)
     jar_path = os.path.abspath(jar_name)
     rel_paths = [os.path.relpath(f, EXT_DIR) for f in sorted(jar_files)]
