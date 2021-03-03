@@ -39,7 +39,7 @@ def main():
     check_call(['zip', '-X', '../geoip.zip', 'geoip'], cwd=REPO_DIR)
 
     # zip binaries together
-    file_list = ['tor_linux-aarch64.zip', 'tor_linux-armhf.zip', 'tor_linux-x86_64.zip', 'geoip.zip']
+    file_list = ['tor_linux-aarch64.zip', 'tor_linux-armhf.zip', 'tor_linux-arm.zip', 'tor_linux-x86_64.zip', 'geoip.zip']
     zip_name = pack(versions, file_list)
     # zip Android binaries together
     file_list_android = ['tor_arm.zip', 'tor_arm_pie.zip', 'tor_arm64_pie.zip',
@@ -195,6 +195,7 @@ def build_android_arch(name, env, versions):
 def build_linux(versions):
     build_linux_arch('aarch64', 'armv8-a', 'aarch64-linux-gnu-gcc', 'linux-aarch64', 'aarch64', versions)
     build_linux_arch('armhf', 'armv7-a', 'arm-linux-gnueabihf-gcc', 'linux-armv4', 'arm-linux-gnueabihf', versions)
+    build_linux_arch('arm', 'armv6', 'arm-linux-gnueabi-gcc', 'linux-armv4', 'arm-linux-gnueabi', versions)
     build_linux_arch('x86_64', 'x86-64', 'x86_64-linux-gnu-gcc', 'linux-x86_64', 'x86_64', versions)
 
 
