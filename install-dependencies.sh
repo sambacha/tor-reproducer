@@ -17,4 +17,6 @@ apt-get install -y --no-install-recommends \
 	fastjar \
 	gcc-aarch64-linux-gnu \
 	libc6-dev-arm64-cross \
+	gcc-arm-linux-gnueabihf \
+	libc6-dev-armhf-cross \
 	perl

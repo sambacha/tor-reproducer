@@ -39,7 +39,7 @@ def main():
     check_call(['zip', '-X', '../geoip.zip', 'geoip'], cwd=REPO_DIR)
 
     # zip binaries together
-    file_list = ['tor_linux-aarch64.zip', 'tor_linux-x86_64.zip', 'geoip.zip']
+    file_list = ['tor_linux-aarch64.zip', 'tor_linux-armhf.zip', 'tor_linux-x86_64.zip', 'geoip.zip']
     zip_name = pack(versions, file_list)
     # zip Android binaries together
     file_list_android = ['tor_arm.zip', 'tor_arm_pie.zip', 'tor_arm64_pie.zip',
@@ -193,11 +193,12 @@ def build_android_arch(name, env, versions):
 
 
 def build_linux(versions):
-    build_linux_arch('aarch64', 'armv8-a', versions)
-    build_linux_arch('x86_64', 'x86-64', versions)
+    build_linux_arch('aarch64', 'armv8-a', 'aarch64-linux-gnu-gcc', 'linux-aarch64', 'aarch64', versions)
+    build_linux_arch('armhf', 'armv7-a', 'arm-linux-gnueabihf-gcc', 'linux-armv4', 'arm-linux-gnueabihf', versions)
+    build_linux_arch('x86_64', 'x86-64', 'x86_64-linux-gnu-gcc', 'linux-x86_64', 'x86_64', versions)
 
 
-def build_linux_arch(arch, gcc_arch, versions):
+def build_linux_arch(arch, gcc_arch, cc_env, openssl_target, autogen_host, versions):
     name="tor_linux-%s.zip" % arch
     print("Building %s" % name)
     prefix_dir = os.path.abspath(os.path.join(REPO_DIR, 'prefix'))
@@ -219,7 +220,7 @@ def build_linux_arch(arch, gcc_arch, versions):
     env['LDFLAGS'] = "-L%s" % prefix_dir
     env['CFLAGS'] = "-fPIC -I%s" % include_dir
     env['LIBS'] = "-ldl -L%s" % lib_dir
-    env['CC'] = "%s-linux-gnu-gcc" % arch
+    env['CC'] = cc_env
 
     # build zlib
     zlib_dir = os.path.join(EXT_DIR, 'zlib')
@@ -230,7 +231,7 @@ def build_linux_arch(arch, gcc_arch, versions):
     openssl_dir = os.path.join(EXT_DIR, 'openssl')
     check_call(['perl', 'Configure', '--prefix=%s' % prefix_dir,
                 '--openssldir=%s' % prefix_dir, '-march=%s' % gcc_arch,
-                'linux-%s' % arch], cwd=openssl_dir, env=env)
+                openssl_target], cwd=openssl_dir, env=env)
     check_call(['make'], cwd=openssl_dir, env=env)
     check_call(['make', 'install_sw'], cwd=openssl_dir, env=env)
 
@@ -238,7 +239,7 @@ def build_linux_arch(arch, gcc_arch, versions):
     libevent_dir = os.path.join(EXT_DIR, 'libevent')
     check_call(['./autogen.sh'], cwd=libevent_dir)
     check_call(['./configure', '--disable-shared', '--prefix=%s' % prefix_dir,
-                '--host=%s' % arch], cwd=libevent_dir, env=env)
+                '--host=%s' % autogen_host], cwd=libevent_dir, env=env)
     check_call(['make'], cwd=libevent_dir, env=env)
     check_call(['make', 'install'], cwd=libevent_dir, env=env)
 
@@ -250,7 +251,7 @@ def build_linux_arch(arch, gcc_arch, versions):
                 '--enable-static-zlib', '--with-zlib-dir=%s' % prefix_dir,
                 '--enable-static-libevent', '--with-libevent-dir=%s' % prefix_dir,
                 '--enable-static-openssl', '--with-openssl-dir=%s' % prefix_dir,
-                '--prefix=%s' % prefix_dir, '--host=%s' % arch,
+                '--prefix=%s' % prefix_dir, '--host=%s' % autogen_host,
                 '--disable-tool-name-check'], cwd=tor_dir, env=env)
     check_call(['make', 'install'], cwd=tor_dir, env=env)
 
