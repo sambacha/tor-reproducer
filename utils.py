@@ -49,7 +49,11 @@ def get_file_suffix(versions, android=False):
 
 
 def get_final_file_name(versions, android=False):
-    return 'tor-%s.jar' % get_file_suffix(versions, android)
+    version = get_version_tag(versions)
+    if version < '0.3.5.14':
+        return 'tor-%s.zip' % get_file_suffix(versions, android)
+    else:
+        return 'tor-%s.jar' % get_file_suffix(versions, android)
 
 
 def get_sources_file_name(versions, android=False):
