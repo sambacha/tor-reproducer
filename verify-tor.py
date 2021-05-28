@@ -28,13 +28,15 @@ def verify(version, for_android):
     file_name = get_final_file_name(versions, for_android)
     ref_file = os.path.join(REF_DIR, file_name)
     try:
-        # try downloading from jcenter
+        # try downloading from maven central (or jcenter for older versions)
         check_call(['wget', '--no-verbose', get_url(versions, for_android), '-O', ref_file])
-    except CalledProcessError:
-        # try fallback to bintray
-        print("Warning: Download from jcenter failed. Trying bintray directly...")
-        check_call(['wget', '--no-verbose', get_url(versions, for_android, fallback=True), '-O',
-                    ref_file])
+    except CalledProcessError as e:
+        # try fallback to bintray (for older versions only)
+        if version < '0.3.5.14':
+            print("Warning: Download from jcenter failed. Trying bintray directly...")
+            check_call(['wget', '--no-verbose', get_url(versions, for_android, fallback=True), '-O', ref_file])
+        else:
+            raise e
 
     # check if Tor was already build
     if not os.path.isfile(file_name):
@@ -64,7 +66,9 @@ def get_url(versions, for_android, fallback=False):
     version = get_version_tag(versions)
     directory = "tor-android" if for_android else "tor"
     file = get_final_file_name(versions, for_android)
-    if not fallback:
+    if version >= '0.3.5.14':
+        return "https://repo.maven.apache.org/maven2/org/briarproject/%s/%s/%s" % (directory, version, file)
+    elif not fallback:
         return "https://jcenter.bintray.com/org/briarproject/%s/%s/%s" % (directory, version, file)
     else:
         return "https://dl.bintray.com/briarproject/org.briarproject/org/briarproject/%s/%s/%s" % \
