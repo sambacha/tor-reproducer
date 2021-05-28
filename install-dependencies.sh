@@ -19,4 +19,5 @@ apt-get install -y --no-install-recommends \
 	libc6-dev-arm64-cross \
 	gcc-arm-linux-gnueabihf \
 	libc6-dev-armhf-cross \
-	perl
+	perl \
+	po4a

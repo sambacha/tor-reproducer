@@ -3,6 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.briarproject</groupId>
   <artifactId>tor-android</artifactId>
+  <name>tor</name>
   <version>VERSION</version>
   <url>https://github.com/n8fr8/tor-android</url>
   <description>Repo for building Tor for Android.</description>
