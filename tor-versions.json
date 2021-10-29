@@ -1,4 +1,20 @@
 {
+  "0.3.5.17": {
+    "tor": "tor-0.3.5.17",
+    "libevent": "release-2.1.8-stable",
+    "openssl": "OpenSSL_1_0_2u",
+    "xz": "v5.2.5",
+    "zlib": "v1.2.11",
+    "zstd": "v1.3.8",
+    "tor-android": "55791c108d4b732b1c12866e4db3b8b1fd826bf1",
+    "tor_android_repo_url": "https://github.com/n8fr8/tor-android",
+    "ndk": {
+      "url": "https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip",
+      "revision": "15.2.4203891",
+      "sha256": "f01788946733bf6294a36727b99366a18369904eb068a599dde8cca2c1d2ba3c"
+    },
+    "timestamp": "201001010000.00"
+  },
   "0.3.5.15": {
     "tor": "tor-0.3.5.15",
     "libevent": "release-2.1.8-stable",
