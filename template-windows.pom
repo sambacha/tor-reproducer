@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.briarproject</groupId>
+  <artifactId>tor</artifactId>
+  <name>tor</name>
+  <version>VERSION</version>
+  <url>https://torproject.org</url>
+  <description>Repo for building Tor for Windows.</description>
+  <licenses>
+   <license>
+     <name>BSD-3-clause</name>
+     <url>https://gitweb.torproject.org/tor.git/tree/LICENSE</url>
+   </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>dingledine</id>
+      <name>Roger Dingledine</name>
+      <email>arma@mit.edu</email>
+    </developer>
+    <developer>
+      <id>mathewson</id>
+      <name>Nick Mathewson</name>
+      <email>nickm@torproject.org</email>
+    </developer>
+    <developer>
+      <id>torproject</id>
+      <name>Tor Project</name>
+      <email>frontdesk@rt.torproject.org</email>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:https://gitweb.torproject.org/tor.git/</connection>
+    <developerConnection>scm:git@gitweb.torproject.org/tor.git</developerConnection>
+    <url>scm:https://gitweb.torproject.org/tor.git</url>
+  </scm>
+</project>

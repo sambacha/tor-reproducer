@@ -1,18 +1,26 @@
-FROM debian:stretch
+FROM debian:bullseye
 
 ENV LANG=C.UTF-8
 ENV DEBIAN_FRONTEND=noninteractive
 
 WORKDIR /opt/tor-reproducer
 
-ADD build-tor.py ./
-ADD verify-tor.py ./
 ADD install*.sh ./
+RUN ./install.sh
+
+ADD build_tor.py ./
+ADD build_tor_android.py ./
+ADD build_tor_linux.py ./
+ADD build_tor_windows.py ./
+ADD verify_tor.py ./
+ADD verify_tor_utils.py ./
+ADD verify_tor_android.py ./
+ADD verify_tor_linux.py ./
+ADD verify_tor_windows.py ./
 ADD tor-versions.json ./
 ADD utils.py ./
-ADD template.pom ./
 ADD template-android.pom ./
-
-RUN ./install.sh
+ADD template-linux.pom ./
+ADD template-windows.pom ./
 
 CMD ./build-tor.py
