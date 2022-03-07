@@ -1,5 +1,6 @@
 /android-ndk
-/tor-android
+/tor-build
+!/tor-build/Makefile
 /android-ndk.zip
 tor-*.zip
 tor-*.pom

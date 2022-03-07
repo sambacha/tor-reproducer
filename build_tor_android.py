@@ -4,7 +4,7 @@ from shutil import rmtree, move, copy
 from subprocess import check_call
 
 import utils
-from utils import get_sha256, fail, REPO_DIR, EXT_DIR, reset_time
+from utils import get_sha256, fail, BUILD_DIR, OUTPUT_DIR, reset_time
 
 NDK_DIR = 'android-ndk'
 PLATFORM = "android"
@@ -58,7 +58,12 @@ def setup_android_ndk(versions):
 
 
 def build_android(versions):
-    os.environ.pop("PIEFLAGS", None)  # uses default PIE flags, if not present
+    # apply tor-android patches first
+    apply_tor_patch("6522c8a2ae9b2f9c4c488188f88d38728ee487a7")
+    apply_tor_patch("fbd64bbed2848eb17c559a4c599a6834eb7db33a")
+
+    # use default PIE flags, if not present
+    os.environ.pop("PIEFLAGS", None)
 
     # build arm pie
     env = os.environ.copy()
@@ -87,20 +92,34 @@ def build_android(versions):
 
 def build_android_arch(name, env, versions):
     print("Building %s" % name)
-    check_call(['make', '-C', 'external', 'clean', 'tor'], cwd=REPO_DIR, env=env)
-    copy(os.path.join(EXT_DIR, 'bin', 'tor'), os.path.join(REPO_DIR, 'tor'))
-    check_call(['strip', '-D', 'tor'], cwd=REPO_DIR)
-    tor_path = os.path.join(REPO_DIR, 'tor')
+    # TODO add extra flags to configure?
+    #  '--enable-static-tor',
+    #  '--enable-static-zlib',
+    check_call(['make', 'clean', 'tor'], cwd=BUILD_DIR, env=env)
+    tor_path = os.path.join(OUTPUT_DIR, 'tor')
+    # note: stripping happens in makefile for now
+    copy(os.path.join(BUILD_DIR, 'tor', 'src', 'app', 'tor'), tor_path)
     reset_time(tor_path, versions)
     print("Sha256 hash of tor before zipping %s: %s" % (name, get_sha256(tor_path)))
-    check_call(['zip', '-X', '../' + name, 'tor'], cwd=REPO_DIR)
+    check_call(['zip', '--no-dir-entries', '--junk-paths', '-X', name, 'tor'], cwd=OUTPUT_DIR)
+
+
+def apply_tor_patch(commit):
+    tor_path = os.path.join(BUILD_DIR, 'tor')
+    check_call(['wget', '--no-verbose', 'https://github.com/guardianproject/tor/commit/' + commit + '.patch'],
+               cwd=tor_path)
+    check_call(['git', 'apply', commit + '.patch'], cwd=tor_path)
 
 
 def package_android(versions):
     # zip Android binaries together
-    file_list_android = ['tor_arm_pie.zip', 'tor_arm64_pie.zip',
-                         'tor_x86_pie.zip', 'tor_x86_64_pie.zip',
-                         'geoip.zip']
+    file_list_android = [
+        os.path.join(OUTPUT_DIR, 'tor_arm_pie.zip'),
+        os.path.join(OUTPUT_DIR, 'tor_arm64_pie.zip'),
+        os.path.join(OUTPUT_DIR, 'tor_x86_pie.zip'),
+        os.path.join(OUTPUT_DIR, 'tor_x86_64_pie.zip'),
+        os.path.join(OUTPUT_DIR, 'geoip.zip'),
+    ]
     zip_name_android = utils.pack(versions, file_list_android, PLATFORM)
     pom_name_android = utils.create_pom_file(versions, PLATFORM)
     print("Android:")

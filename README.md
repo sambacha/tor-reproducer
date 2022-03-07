@@ -66,6 +66,11 @@ There should be a tag with the name `[version]` in this repository
 that you could be used to reproduce the old container.
 Note that this will not work if the issue is caused by an updated Debian package.
 
+### Historical changes
+
+The Tor 0.3.x series had a different build system than the 0.4.x series.
+Please use a version of tor-reproducer that starts with 0.3 to reproduce those.
+
 ### Only build Tor
 
 To build a specific version of Tor, run

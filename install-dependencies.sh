@@ -10,6 +10,7 @@ apt-get install -y --no-install-recommends \
 	build-essential \
 	make \
 	patch \
+	pkg-config \
 	autopoint \
 	libtool \
 	automake \
