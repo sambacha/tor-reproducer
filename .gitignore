@@ -2,7 +2,7 @@
 /tor-build
 !/tor-build/Makefile
 /android-ndk.zip
-tor-*.zip
+tor-*.jar
 tor-*.pom
 tor-*-sources.jar
 
