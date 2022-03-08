@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import os
 import sys
-from subprocess import check_call, CalledProcessError
+from subprocess import check_call
 
 from utils import get_sha256, get_build_versions, get_final_file_name, get_version_tag, get_version
 
@@ -26,16 +26,8 @@ def verify(version, platform):
     os.makedirs(REF_DIR, exist_ok=True)
     file_name = get_final_file_name(versions, platform)
     ref_file = os.path.join(REF_DIR, file_name)
-    try:
-        # try downloading from maven central (or jcenter for older versions)
-        check_call(['wget', '--no-verbose', get_url(versions, platform), '-O', ref_file])
-    except CalledProcessError as e:
-        # try fallback to bintray (for older versions only)
-        if version is None or not version < '0.3.5.14':
-            raise e
-        else:
-            print("Warning: Download from jcenter failed. Trying bintray directly...")
-            check_call(['wget', '--no-verbose', get_url(versions, platform, fallback=True), '-O', ref_file])
+    # try downloading from maven central
+    check_call(['wget', '--no-verbose', get_url(versions, platform), '-O', ref_file])
 
     # check if Tor was already build
     if not os.path.isfile(file_name):
@@ -67,14 +59,8 @@ def verify(version, platform):
         return False
 
 
-def get_url(versions, platform, fallback=False):
+def get_url(versions, platform):
     version = get_version_tag(versions)
     directory = "tor-%s" % platform
     file = get_final_file_name(versions, platform)
-    if version >= '0.3.5.14':
-        return "https://repo.maven.apache.org/maven2/org/briarproject/%s/%s/%s" % (directory, version, file)
-    elif not fallback:
-        return "https://jcenter.bintray.com/org/briarproject/%s/%s/%s" % (directory, version, file)
-    else:
-        return "https://dl.bintray.com/briarproject/org.briarproject/org/briarproject/%s/%s/%s" % \
-               (directory, version, file)
+    return "https://repo.maven.apache.org/maven2/org/briarproject/%s/%s/%s" % (directory, version, file)

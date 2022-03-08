@@ -159,11 +159,7 @@ def get_file_suffix(versions, platform):
 
 
 def get_final_file_name(versions, platform):
-    version = get_version_tag(versions)
-    if version < '0.3.5.14':
-        return 'tor-%s.zip' % get_file_suffix(versions, platform)
-    else:
-        return 'tor-%s.jar' % get_file_suffix(versions, platform)
+    return 'tor-%s.jar' % get_file_suffix(versions, platform)
 
 
 def get_sources_file_name(versions, platform):
@@ -184,11 +180,7 @@ def pack(versions, file_list, platform):
 
 
 def reset_time(filename, versions):
-    if 'timestamp' in versions:
-        timestamp = versions['timestamp']
-    else:
-        timestamp = '197001010000.00'
-    check_call(['touch', '--no-dereference', '-t', timestamp, filename])
+    check_call(['touch', '--no-dereference', '-t', versions['timestamp'], filename])
 
 
 def create_sources_jar(versions, platform):
