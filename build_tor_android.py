@@ -17,7 +17,6 @@ def build():
 
     build_android(versions)
 
-    utils.package_geoip(versions)
     package_android(versions)
 
 
@@ -118,7 +117,6 @@ def package_android(versions):
         os.path.join(OUTPUT_DIR, 'tor_arm64_pie.zip'),
         os.path.join(OUTPUT_DIR, 'tor_x86_pie.zip'),
         os.path.join(OUTPUT_DIR, 'tor_x86_64_pie.zip'),
-        os.path.join(OUTPUT_DIR, 'geoip.zip'),
     ]
     zip_name_android = utils.pack(versions, file_list_android, PLATFORM)
     pom_name_android = utils.create_pom_file(versions, PLATFORM)

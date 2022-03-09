@@ -15,7 +15,6 @@ def build():
 
     build_linux(versions)
 
-    utils.package_geoip(versions)
     package_linux(versions, jar_name)
 
 
@@ -128,7 +127,6 @@ def package_linux(versions, jar_name):
         os.path.join(OUTPUT_DIR, 'tor_linux-aarch64.zip'),
         os.path.join(OUTPUT_DIR, 'tor_linux-armhf.zip'),
         os.path.join(OUTPUT_DIR, 'tor_linux-x86_64.zip'),
-        os.path.join(OUTPUT_DIR, 'geoip.zip'),
     ]
     zip_name = pack(versions, file_list, PLATFORM)
 

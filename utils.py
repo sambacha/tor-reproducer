@@ -77,14 +77,6 @@ def setup(platform):
     return versions, jar_name
 
 
-def package_geoip(versions):
-    # zip geoip database
-    geoip_path = os.path.join(OUTPUT_DIR, 'geoip')
-    copy(os.path.join(BUILD_DIR, 'tor', 'src', 'config', 'geoip'), geoip_path)
-    reset_time(geoip_path, versions)
-    check_call(['zip', '-X', 'geoip.zip', 'geoip'], cwd=OUTPUT_DIR)
-
-
 def prepare_repos(versions):
     prepare_repo(os.path.join(BUILD_DIR, "tor"), versions['tor']['url'], versions['tor']['commit'])
     prepare_repo(os.path.join(BUILD_DIR, "libevent"), versions['libevent']['url'], versions['libevent']['commit'])

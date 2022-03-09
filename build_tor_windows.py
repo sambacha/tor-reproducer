@@ -15,7 +15,6 @@ def build():
 
     build_windows(versions)
 
-    utils.package_geoip(versions)
     package_windows(versions, jar_name)
 
 
@@ -127,7 +126,6 @@ def package_windows(versions, jar_name):
     # zip binaries together
     file_list = [
         os.path.join(OUTPUT_DIR, 'tor_windows-x86_64.zip'),
-        os.path.join(OUTPUT_DIR, 'geoip.zip'),
     ]
     zip_name = utils.pack(versions, file_list, PLATFORM)
 
