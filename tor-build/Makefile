@@ -1,8 +1,7 @@
-# Please install the following prerequisites (instructions for each follows):
-# 	Android OS SDK: http://source.android.com/download
-#
-# Install and prepare the Android OS SDK ( http://source.android.com/download )
-# on Debian or Ubuntu
+# Based on Guardian Project's tor-android repo. Copied from:
+# https://github.com/guardianproject/tor-android/blob/7e6cffd6adc5b0d62b104029148bc42694761926/external/Makefile
+# Copyright (c) 2009-2010, Nathan Freitas, The Guardian Project
+# Licensed under 3-clause BSD license
 
 EXTERNAL_ROOT := $(shell pwd)
 
@@ -35,16 +34,6 @@ ifneq ($(NDK_REQUIRED_REVISION), $(NDK_REVISION))
  $(warning WARNING: NDK $(NDK_REQUIRED_REVISION) required for reproducible builds, $(NDK_REVISION) is installed.)
 endif
 
-
-ifneq ($(filter mips%, $(APP_ABI)),)
- HOST := mipsel-linux-android
- ALTHOST := $(HOST)
- GREP_CHECK := MIPS
- NDK_ABI := mips
- NDK_BIT := 32
- NDK_PLATFORM_LEVEL := 16
- NDK_TOOLCHAIN := $(HOST)-$(NDK_TOOLCHAIN_VERSION)
-endif
 ifneq ($(filter arm64-v8a, $(APP_ABI)),)
  HOST := aarch64-linux-android
  ALTHOST := $(HOST)
@@ -278,14 +267,10 @@ tor/Makefile: tor/configure.ac tor/Makefile.am
                 --disable-unittests \
                 --disable-asciidoc \
 				--prefix=$(EXTERNAL_ROOT)
-	grep -E '^# *define +HAVE_LZMA +1$$' tor/orconfig.h
-	grep -E '^# *define +HAVE_ZSTD +1$$' tor/orconfig.h
-	grep -E '^# *define +ENABLE_OPENSSL +1$$' tor/orconfig.h
-	grep -E '^# *define +HAVE_TLS_METHOD +1$$' tor/orconfig.h
 
 tor-build-stamp: tor/Makefile
 	$(MAKE) -C tor
-	$(NDK_TOOLCHAIN_BASE)/bin/$(ALTHOST)-strip -D --strip-unneeded -R .note -R .comment --strip-debug $(OUTPUT_FILE)
+	$(NDK_TOOLCHAIN_BASE)/bin/$(ALTHOST)-strip -D --strip-unneeded -R .note* -R .comment --strip-debug $(OUTPUT_FILE)
 	touch $@
 
 tor: lzma-build-stamp zstd-build-stamp libevent-build-stamp openssl-build-stamp tor-build-stamp
@@ -295,30 +280,6 @@ tor-clean:
 	-rm -f tor-build-stamp
 	-cd tor && \
 		git clean -fdx > /dev/null
-
-
-#------------------------------------------------------------------------------#
-# create and clean libtor.so
-
-PREBUILD_SHARED_LIBRARY: tor
-	file $(OUTPUT_FILE) | grep $(GREP_CHECK)
-	install -d $(EXTERNAL_ROOT)/lib/$(APP_ABI)
-	cp $(OUTPUT_FILE) $(INSTALL_DIR)/libtor.so
-	cp openssl/configdata.pm tor/orconfig.h $(INSTALL_DIR)/
-ifneq ($(DEBUG), 1)
-	ls -l  $(INSTALL_DIR)/libtor.so
-	$(NDK_TOOLCHAIN_BASE)/bin/$(ALTHOST)-strip --strip-unneeded -R .note -R .comment --strip-debug \
-		$(INSTALL_DIR)/libtor.so
-	ls -l  $(INSTALL_DIR)/libtor.so
-endif
-	@echo "check if all the libs got included:"
-	grep "tor_lzma_state_size_precalc" $(INSTALL_DIR)/libtor.so
-	install -d $(EXTERNAL_ROOT)/test/$(APP_ABI)
-	cp tor/src/test/test tor/src/test/test-memwipe tor/src/test/test-slow \
-		$(EXTERNAL_ROOT)/test/$(APP_ABI)
-
-PREBUILD_SHARED_LIBRARY-clean:
-	-rm $(INSTALL_DIR)/libtor.so
 
 
 #------------------------------------------------------------------------------#
