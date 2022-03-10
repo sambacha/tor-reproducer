@@ -1,6 +1,7 @@
 /android-ndk
 /tor-build
 !/tor-build/Makefile
+!/tor-build/output/.gitkeep
 /android-ndk.zip
 tor-*.jar
 tor-*.pom
