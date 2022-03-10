@@ -22,5 +22,6 @@ ADD utils.py ./
 ADD template-android.pom ./
 ADD template-linux.pom ./
 ADD template-windows.pom ./
+ADD tor-build/Makefile ./tor-build/
 
 CMD ./build-tor.py
