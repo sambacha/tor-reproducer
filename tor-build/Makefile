@@ -96,14 +96,13 @@ OUTPUT_FILE := $(EXTERNAL_ROOT)/tor/src/app/tor
 INSTALL_DIR := $(EXTERNAL_ROOT)/lib/$(APP_ABI)
 
 .PHONY = clean showsetup \
-	PREBUILD_SHARED_LIBRARY PREBUILD_SHARED_LIBRARY-clean \
 	openssl-clean \
 	libevent-clean \
 	lzma-clean \
 	zstd-clean \
 	tor tor-clean
 
-all: test-setup PREBUILD_SHARED_LIBRARY
+all: test-setup tor
 
 test-setup:
 	test -d $(NDK_SYSROOT)
