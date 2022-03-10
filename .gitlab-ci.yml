@@ -25,9 +25,9 @@ build:
   stage: test
   artifacts:
     paths:
-      - tor-*.jar
-      - tor-*.pom
-      - tor-*-sources.jar
+      - tor-build/output/*/tor-*.jar
+      - tor-build/output/*/tor-*.pom
+      - tor-build/output/*/tor-*-sources.jar
     expire_in: 1 week
     when: always
 
