@@ -153,15 +153,18 @@ def get_file_suffix(versions, platform):
 
 
 def get_final_file_name(versions, platform):
-    return 'tor-%s.jar' % get_file_suffix(versions, platform)
+    file = 'tor-%s.jar' % get_file_suffix(versions, platform)
+    return os.path.join(get_output_dir(platform), file)
 
 
 def get_sources_file_name(versions, platform):
-    return 'tor-%s-sources.jar' % get_file_suffix(versions, platform)
+    file = 'tor-%s-sources.jar' % get_file_suffix(versions, platform)
+    return os.path.join(get_output_dir(platform), file)
 
 
 def get_pom_file_name(versions, platform):
-    return 'tor-%s.pom' % get_file_suffix(versions, platform)
+    file = 'tor-%s.pom' % get_file_suffix(versions, platform)
+    return os.path.join(get_output_dir(platform), file)
 
 
 def pack(versions, file_list, platform):
