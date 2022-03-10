@@ -137,18 +137,18 @@ openssl/Makefile: openssl/Configure $(wildcard openssl/Configurations/*.*)
 
 openssl-build-stamp: openssl/Makefile
 ifeq ($(V), 0)
-	PATH=$(PATH) make -j`nproc` --silent -C openssl install_dev DESTDIR=$(EXTERNAL_ROOT) ECHO=':'
+	PATH=$(PATH) $(MAKE) --silent -C openssl install_dev DESTDIR=$(EXTERNAL_ROOT) ECHO=':'
 else
-	PATH=$(PATH) make -j`nproc` -C openssl install_dev DESTDIR=$(EXTERNAL_ROOT)
+	PATH=$(PATH) $(MAKE) -C openssl install_dev DESTDIR=$(EXTERNAL_ROOT)
 endif
 	touch $@
 
 openssl-clean:
-	-rm openssl-build-stamp
-	-rm lib/libcrypto.a
-	-rm lib/libssl.a
-	-make -C openssl uninstall_dev > /dev/null
-	-make -C openssl clean
+	-rm -f openssl-build-stamp
+	-rm -f lib/libcrypto.a
+	-rm -f lib/libssl.a
+	-$(MAKE) -C openssl uninstall_dev > /dev/null
+	-$(MAKE) -C openssl clean
 	-cd openssl && \
 		git clean -fdx > /dev/null
 
