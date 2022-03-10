@@ -98,11 +98,12 @@ def build_windows_arch(arch, host, versions):
     env['CFLAGS'] += ' -O3'
     env['LIBS'] = "-lcrypt32"
 
+    # TODO check if a completely static Tor is still portable
+    #  '--enable-static-tor',
     check_call(['./configure',
                 '--host=%s' % host,
                 '--prefix=%s' % prefix_dir,
                 '--enable-lzma',
-                '--enable-static-tor',
                 '--enable-static-zlib',
                 '--with-zlib-dir=%s' % prefix_dir,
                 '--enable-static-libevent',

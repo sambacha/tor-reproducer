@@ -97,10 +97,11 @@ def build_linux_arch(arch, gcc_arch, cc_env, openssl_target, autogen_host, versi
     tor_dir = os.path.join(BUILD_DIR, 'tor')
     check_call(['./autogen.sh'], cwd=tor_dir)
     env['CFLAGS'] += ' -O3'  # needed for FORTIFY_SOURCE
+    # TODO check if a completely static Tor is still portable
+    #  '--enable-static-tor',
     check_call(['./configure',
                 '--host=%s' % autogen_host,
                 '--prefix=%s' % prefix_dir,
-                '--enable-static-tor',
                 '--enable-lzma',
                 '--enable-zstd',
                 '--enable-static-zlib',
