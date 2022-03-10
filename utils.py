@@ -9,7 +9,6 @@ from shutil import copy, rmtree
 from subprocess import check_call
 
 BUILD_DIR = 'tor-build'
-OUTPUT_DIR = os.path.abspath(os.path.join(BUILD_DIR, 'output'))
 TOR_CONFIGURE_FLAGS = [
     '--disable-asciidoc',
     '--disable-systemd',
@@ -54,6 +53,8 @@ OPENSSL_CONFIGURE_FLAGS = [
 ]
 REPRODUCIBLE_GCC_CFLAGS = '-fno-guess-branch-probability -frandom-seed="0"'
 
+def get_output_dir(platform):
+    return os.path.abspath(os.path.join(BUILD_DIR, 'output', platform))
 
 def setup(platform):
     # get Tor version from command or show usage information
@@ -64,9 +65,10 @@ def setup(platform):
     print("Building Tor %s" % versions['tor']['commit'])
 
     # remove output from previous build
-    if os.path.isdir(OUTPUT_DIR):
-        rmtree(OUTPUT_DIR)
-    os.makedirs(OUTPUT_DIR)
+    output_dir = get_output_dir(platform)
+    if os.path.isdir(output_dir):
+        rmtree(output_dir)
+    os.makedirs(output_dir)
 
     # clone and checkout repos based on tor-versions.json
     prepare_repos(versions)
@@ -176,6 +178,7 @@ def reset_time(filename, versions):
 
 
 def create_sources_jar(versions, platform):
+    output_dir = get_output_dir(platform)
     jar_files = []
     for root, dir_names, filenames in os.walk(BUILD_DIR):
         for f in filenames:
@@ -186,13 +189,13 @@ def create_sources_jar(versions, platform):
         reset_time(file, versions)
     jar_name = get_sources_file_name(versions, platform)
     jar_path = os.path.abspath(jar_name)
-    rel_paths = [os.path.relpath(f, OUTPUT_DIR) for f in sorted(jar_files)]
+    rel_paths = [os.path.relpath(f, output_dir) for f in sorted(jar_files)]
     # create jar archive with first files
     jar_step = 5000
-    check_call(['jar', 'cf', jar_path] + rel_paths[0:jar_step], cwd=OUTPUT_DIR)
+    check_call(['jar', 'cf', jar_path] + rel_paths[0:jar_step], cwd=output_dir)
     # add subsequent files in steps, because the command line can't handle all at once
     for i in range(jar_step, len(rel_paths), jar_step):
-        check_call(['jar', 'uf', jar_path] + rel_paths[i:i + jar_step], cwd=OUTPUT_DIR)
+        check_call(['jar', 'uf', jar_path] + rel_paths[i:i + jar_step], cwd=output_dir)
     return jar_name
 
 

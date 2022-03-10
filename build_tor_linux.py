@@ -4,7 +4,7 @@ from shutil import rmtree, copy
 from subprocess import check_call
 
 import utils
-from utils import BUILD_DIR, OUTPUT_DIR, TOR_CONFIGURE_FLAGS, OPENSSL_CONFIGURE_FLAGS, REPRODUCIBLE_GCC_CFLAGS, \
+from utils import BUILD_DIR, get_output_dir, TOR_CONFIGURE_FLAGS, OPENSSL_CONFIGURE_FLAGS, REPRODUCIBLE_GCC_CFLAGS, \
     XZ_CONFIGURE_FLAGS, reset_time, get_sha256, pack, create_pom_file
 
 PLATFORM = "linux"
@@ -114,27 +114,26 @@ def build_linux_arch(arch, gcc_arch, cc_env, openssl_target, autogen_host, versi
     check_call(['make', '-j', str(os.cpu_count()), 'install'], cwd=tor_dir, env=env)
 
     # copy and zip built Tor binary
-    tor_path = os.path.join(OUTPUT_DIR, 'tor')
+    output_dir = get_output_dir(PLATFORM)
+    tor_path = os.path.join(output_dir, 'tor')
     copy(os.path.join(BUILD_DIR, 'tor', 'src', 'app', 'tor'), tor_path)
     check_call(['strip', '-D', '--strip-unneeded', '--strip-debug', '-R', '.note*', '-R', '.comment', tor_path])
     reset_time(tor_path, versions)
     print("Sha256 hash of tor before zipping %s: %s" % (name, get_sha256(tor_path)))
-    check_call(['zip', '--no-dir-entries', '--junk-paths', '-X', name, 'tor'], cwd=OUTPUT_DIR)
+    check_call(['zip', '--no-dir-entries', '--junk-paths', '-X', name, 'tor'], cwd=output_dir)
 
 
 def package_linux(versions, jar_name):
     # zip binaries together
+    output_dir = get_output_dir(PLATFORM)
     file_list = [
-        os.path.join(OUTPUT_DIR, 'tor_linux-aarch64.zip'),
-        os.path.join(OUTPUT_DIR, 'tor_linux-armhf.zip'),
-        os.path.join(OUTPUT_DIR, 'tor_linux-x86_64.zip'),
+        os.path.join(output_dir, 'tor_linux-aarch64.zip'),
+        os.path.join(output_dir, 'tor_linux-armhf.zip'),
+        os.path.join(output_dir, 'tor_linux-x86_64.zip'),
     ]
     zip_name = pack(versions, file_list, PLATFORM)
-
-    # create POM file from template
     pom_name = create_pom_file(versions, PLATFORM)
-
-    # print hashes for debug purposes
+    print("%s:" % PLATFORM)
     for file in file_list + [zip_name, jar_name, pom_name]:
         sha256hash = get_sha256(file)
         print("%s: %s" % (file, sha256hash))

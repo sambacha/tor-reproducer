@@ -4,20 +4,20 @@ from shutil import rmtree, move, copy
 from subprocess import check_call
 
 import utils
-from utils import get_sha256, fail, BUILD_DIR, OUTPUT_DIR, reset_time
+from utils import get_sha256, fail, BUILD_DIR, get_output_dir, reset_time
 
 NDK_DIR = 'android-ndk'
 PLATFORM = "android"
 
 
 def build():
-    versions, _ = utils.setup(PLATFORM)
+    versions, jar_name = utils.setup(PLATFORM)
 
     setup_android_ndk(versions)
 
     build_android(versions)
 
-    package_android(versions)
+    package_android(versions, jar_name)
 
 
 def setup_android_ndk(versions):
@@ -91,16 +91,17 @@ def build_android(versions):
 
 def build_android_arch(name, env, versions):
     print("Building %s" % name)
+    output_dir = get_output_dir(PLATFORM)
     # TODO add extra flags to configure?
     #  '--enable-static-tor',
     #  '--enable-static-zlib',
     check_call(['make', 'clean', 'tor'], cwd=BUILD_DIR, env=env)
-    tor_path = os.path.join(OUTPUT_DIR, 'tor')
+    tor_path = os.path.join(output_dir, 'tor')
     # note: stripping happens in makefile for now
     copy(os.path.join(BUILD_DIR, 'tor', 'src', 'app', 'tor'), tor_path)
     reset_time(tor_path, versions)
     print("Sha256 hash of tor before zipping %s: %s" % (name, get_sha256(tor_path)))
-    check_call(['zip', '--no-dir-entries', '--junk-paths', '-X', name, 'tor'], cwd=OUTPUT_DIR)
+    check_call(['zip', '--no-dir-entries', '--junk-paths', '-X', name, 'tor'], cwd=output_dir)
 
 
 def apply_tor_patch(commit):
@@ -110,18 +111,19 @@ def apply_tor_patch(commit):
     check_call(['git', 'apply', commit + '.patch'], cwd=tor_path)
 
 
-def package_android(versions):
-    # zip Android binaries together
-    file_list_android = [
-        os.path.join(OUTPUT_DIR, 'tor_arm_pie.zip'),
-        os.path.join(OUTPUT_DIR, 'tor_arm64_pie.zip'),
-        os.path.join(OUTPUT_DIR, 'tor_x86_pie.zip'),
-        os.path.join(OUTPUT_DIR, 'tor_x86_64_pie.zip'),
+def package_android(versions, jar_name):
+    # zip binaries together
+    output_dir = get_output_dir(PLATFORM)
+    file_list = [
+        os.path.join(output_dir, 'tor_arm_pie.zip'),
+        os.path.join(output_dir, 'tor_arm64_pie.zip'),
+        os.path.join(output_dir, 'tor_x86_pie.zip'),
+        os.path.join(output_dir, 'tor_x86_64_pie.zip'),
     ]
-    zip_name_android = utils.pack(versions, file_list_android, PLATFORM)
-    pom_name_android = utils.create_pom_file(versions, PLATFORM)
-    print("Android:")
-    for file in file_list_android + [zip_name_android, pom_name_android]:
+    zip_name = utils.pack(versions, file_list, PLATFORM)
+    pom_name = utils.create_pom_file(versions, PLATFORM)
+    print("%s:" % PLATFORM)
+    for file in file_list + [zip_name, jar_name, pom_name]:
         sha256hash = get_sha256(file)
         print("%s: %s" % (file, sha256hash))
 
