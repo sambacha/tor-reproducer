@@ -75,6 +75,7 @@ def build_windows_arch(arch, host, versions):
                 # '-static',  # https://github.com/openssl/openssl/issues/14574
                 '-static-libgcc',
                 'no-shared',
+                'enable-ec_nistp_64_gcc_128',
                 ] + OPENSSL_CONFIGURE_FLAGS, cwd=openssl_dir, env=env)
     check_call(['make', '-j', str(os.cpu_count())], cwd=openssl_dir, env=env)
     check_call(['make', 'install_sw'], cwd=openssl_dir, env=env)
