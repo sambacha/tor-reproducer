@@ -54,7 +54,7 @@ OPENSSL_CONFIGURE_FLAGS = [
 REPRODUCIBLE_GCC_CFLAGS = '-fno-guess-branch-probability -frandom-seed="0"'
 
 def get_output_dir(platform):
-    return os.path.abspath(os.path.join(BUILD_DIR, 'output', platform))
+    return os.path.abspath(os.path.join('output', platform))
 
 def setup(platform):
     # get Tor version from command or show usage information
@@ -192,13 +192,13 @@ def create_sources_jar(versions, platform):
         reset_time(file, versions)
     jar_name = get_sources_file_name(versions, platform)
     jar_path = os.path.abspath(jar_name)
-    rel_paths = [os.path.relpath(f, output_dir) for f in sorted(jar_files)]
+    rel_paths = [os.path.relpath(f, BUILD_DIR) for f in sorted(jar_files)]
     # create jar archive with first files
     jar_step = 5000
-    check_call(['jar', 'cf', jar_path] + rel_paths[0:jar_step], cwd=output_dir)
+    check_call(['jar', 'cf', jar_path] + rel_paths[0:jar_step], cwd=BUILD_DIR)
     # add subsequent files in steps, because the command line can't handle all at once
     for i in range(jar_step, len(rel_paths), jar_step):
-        check_call(['jar', 'uf', jar_path] + rel_paths[i:i + jar_step], cwd=output_dir)
+        check_call(['jar', 'uf', jar_path] + rel_paths[i:i + jar_step], cwd=BUILD_DIR)
     return jar_name
 
 
