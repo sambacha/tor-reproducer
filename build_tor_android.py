@@ -57,10 +57,6 @@ def setup_android_ndk(versions):
 
 
 def build_android(versions):
-    # apply tor-android patches first
-    apply_tor_patch("6522c8a2ae9b2f9c4c488188f88d38728ee487a7")
-    apply_tor_patch("fbd64bbed2848eb17c559a4c599a6834eb7db33a")
-
     # use default PIE flags, if not present
     os.environ.pop("PIEFLAGS", None)
 
@@ -103,13 +99,6 @@ def build_android_arch(name, env, versions):
     print("Sha256 hash of tor before zipping %s: %s" % (name, get_sha256(tor_path)))
     check_call(['zip', '--no-dir-entries', '--junk-paths', '-X', name, 'tor'], cwd=output_dir)
     os.remove(tor_path)
-
-
-def apply_tor_patch(commit):
-    tor_path = os.path.join(BUILD_DIR, 'tor')
-    check_call(['wget', '--no-verbose', 'https://github.com/guardianproject/tor/commit/' + commit + '.patch'],
-               cwd=tor_path)
-    check_call(['git', 'apply', commit + '.patch'], cwd=tor_path)
 
 
 def package_android(versions, jar_name):

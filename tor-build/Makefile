@@ -165,7 +165,7 @@ libevent/Makefile: libevent/Makefile.am libevent/configure.ac
 				--disable-libevent-regress \
 				--disable-samples \
 				--disable-shared \
-			        --prefix=/
+					--prefix=/
 
 libevent-build-stamp: openssl-build-stamp libevent/Makefile
 	$(MAKE) -C libevent install DESTDIR=$(EXTERNAL_ROOT)
@@ -255,16 +255,20 @@ tor/Makefile: tor/configure.ac tor/Makefile.am
 	cd tor && \
 			./configure \
 				--host=$(ALTHOST) \
-				--enable-android \
 				--enable-lzma \
 				--enable-pic \
 				--enable-static-libevent --with-libevent-dir=$(EXTERNAL_ROOT) \
 				--enable-static-openssl --with-openssl-dir=$(EXTERNAL_ROOT) \
 				--enable-zstd \
 				--disable-module-dirauth \
-                --disable-module-relay \
-                --disable-unittests \
-                --disable-asciidoc \
+				--disable-module-relay \
+				--disable-unittests \
+				--disable-asciidoc \
+				--disable-html-manual \
+				--disable-manpage \
+				--disable-system-torrc \
+				--disable-tool-name-check \
+				--disable-systemd \
 				--prefix=$(EXTERNAL_ROOT)
 
 tor-build-stamp: tor/Makefile
