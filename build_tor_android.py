@@ -102,6 +102,7 @@ def build_android_arch(name, env, versions):
     reset_time(tor_path, versions)
     print("Sha256 hash of tor before zipping %s: %s" % (name, get_sha256(tor_path)))
     check_call(['zip', '--no-dir-entries', '--junk-paths', '-X', name, 'tor'], cwd=output_dir)
+    os.remove(tor_path)
 
 
 def apply_tor_patch(commit):

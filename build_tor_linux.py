@@ -121,6 +121,7 @@ def build_linux_arch(arch, gcc_arch, cc_env, openssl_target, autogen_host, versi
     reset_time(tor_path, versions)
     print("Sha256 hash of tor before zipping %s: %s" % (name, get_sha256(tor_path)))
     check_call(['zip', '--no-dir-entries', '--junk-paths', '-X', name, 'tor'], cwd=output_dir)
+    os.remove(tor_path)
 
 
 def package_linux(versions, jar_name):
