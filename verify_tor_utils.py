@@ -62,5 +62,5 @@ def verify(version, platform):
 def get_url(versions, platform):
     version = get_version_tag(versions)
     directory = "tor-%s" % platform
-    file = get_final_file_name(versions, platform)
+    file = os.path.basename(get_final_file_name(versions, platform))
     return "https://repo.maven.apache.org/maven2/org/briarproject/%s/%s/%s" % (directory, version, file)
