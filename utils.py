@@ -5,13 +5,56 @@ import json
 import os
 import sys
 from collections import OrderedDict
-from shutil import copy
+from shutil import copy, rmtree
 from subprocess import check_call
 
-REPO_DIR = 'tor-android'
-ZLIB_REPO_URL = 'https://github.com/madler/zlib.git'
-EXT_DIR = os.path.abspath(os.path.join(REPO_DIR, 'external'))
+BUILD_DIR = 'tor-build'
+TOR_CONFIGURE_FLAGS = [
+    '--disable-asciidoc',
+    '--disable-systemd',
+    '--disable-tool-name-check',
+    '--disable-module-relay',
+    '--disable-module-dirauth',
+    '--disable-unittests',
+    '--disable-asciidoc',
+    '--disable-manpage',
+    '--disable-html-manual',
+]
+XZ_CONFIGURE_FLAGS = [
+    '--enable-static',
+    '--disable-doc',
+    '--disable-lzma-links',
+    '--disable-lzmadec',
+    '--disable-lzmainfo',
+    '--disable-scripts',
+    '--disable-shared',
+    '--disable-xz',
+    '--disable-xzdec',
+]
+OPENSSL_CONFIGURE_FLAGS = [
+    'no-unit-test',
+    'no-asm',
+    'no-comp',
+    'no-dtls',
+    'no-err',
+    'no-psk',
+    'no-srp',
+    'no-weak-ssl-ciphers',
+    'no-camellia',
+    'no-idea',
+    'no-md2',
+    'no-md4',
+    'no-rc2',
+    'no-rc4',
+    'no-rc5',
+    'no-rmd160',
+    'no-whirlpool',
+    'no-ui-console',
+]
+REPRODUCIBLE_GCC_CFLAGS = '-fno-guess-branch-probability -frandom-seed="0"'
 
+def get_output_dir(platform):
+    return os.path.abspath(os.path.join('output', platform))
 
 def setup(platform):
     # get Tor version from command or show usage information
@@ -19,10 +62,16 @@ def setup(platform):
 
     # get Tor version and versions of its dependencies
     versions = get_build_versions(version)
-    print("Building Tor %s" % versions['tor'])
+    print("Building Tor %s" % versions['tor']['commit'])
 
-    # clone and checkout tor-android repo based on tor-versions.json
-    prepare_tor_android_repo(versions)
+    # remove output from previous build
+    output_dir = get_output_dir(platform)
+    if os.path.isdir(output_dir):
+        rmtree(output_dir)
+    os.makedirs(output_dir)
+
+    # clone and checkout repos based on tor-versions.json
+    prepare_repos(versions)
 
     # create sources jar before building
     jar_name = create_sources_jar(versions, platform)
@@ -30,48 +79,37 @@ def setup(platform):
     return versions, jar_name
 
 
-def package_geoip(versions):
-    # zip geoip database
-    geoip_path = os.path.join(REPO_DIR, 'geoip')
-    copy(os.path.join(EXT_DIR, 'tor', 'src', 'config', 'geoip'), geoip_path)
-    reset_time(geoip_path, versions)
-    check_call(['zip', '-X', '../geoip.zip', 'geoip'], cwd=REPO_DIR)
+def prepare_repos(versions):
+    prepare_repo(os.path.join(BUILD_DIR, "tor"), versions['tor']['url'], versions['tor']['commit'])
+    prepare_repo(os.path.join(BUILD_DIR, "libevent"), versions['libevent']['url'], versions['libevent']['commit'])
+    prepare_repo(os.path.join(BUILD_DIR, "openssl"), versions['openssl']['url'], versions['openssl']['commit'])
+    prepare_repo(os.path.join(BUILD_DIR, "xz"), versions['xz']['url'], versions['xz']['commit'])
+    prepare_repo(os.path.join(BUILD_DIR, "zlib"), versions['zlib']['url'], versions['zlib']['commit'])
+    prepare_repo(os.path.join(BUILD_DIR, "zstd"), versions['zstd']['url'], versions['zstd']['commit'])
 
 
-def prepare_tor_android_repo(versions):
-    if os.path.isdir(REPO_DIR):
+def prepare_repo(path, url, version):
+    if os.path.isdir(path):
         # get latest commits and tags from remote
-        check_call(['git', 'fetch', '--recurse-submodules=yes', 'origin'], cwd=REPO_DIR)
+        check_call(['git', 'fetch', '--recurse-submodules=yes', 'origin'], cwd=path)
     else:
         # clone repo
-        url = versions['tor_android_repo_url']
-        check_call(['git', 'clone', url, REPO_DIR])
+        check_call(['git', 'clone', url, path])
 
-    # checkout tor-android version
-    check_call(['git', 'checkout', '-f', versions['tor-android']], cwd=REPO_DIR)
+    # checkout given version
+    check_call(['git', 'checkout', '-f', version], cwd=path)
 
     # initialize and/or update submodules
     # (after checkout, because submodules can point to non-existent commits on master)
-    check_call(['git', 'submodule', 'update', '--init', '--recursive', '-f'], cwd=REPO_DIR)
+    check_call(['git', 'submodule', 'update', '--init', '--recursive', '-f'], cwd=path)
 
     # undo all changes
-    check_call(['git', 'reset', '--hard'], cwd=REPO_DIR)
-    check_call(['git', 'submodule', 'foreach', 'git', 'reset', '--hard'], cwd=REPO_DIR)
+    check_call(['git', 'reset', '--hard'], cwd=path)
+    check_call(['git', 'submodule', 'foreach', 'git', 'reset', '--hard'], cwd=path)
 
     # clean all untracked files and directories (-d) from repo
-    check_call(['git', 'clean', '-dffx'], cwd=REPO_DIR)
-    check_call(['git', 'submodule', 'foreach', 'git', 'clean', '-dffx'], cwd=REPO_DIR)
-
-    # add zlib
-    check_call(['git', 'clone', ZLIB_REPO_URL], cwd=EXT_DIR)
-
-    # check out versions of external dependencies
-    checkout('tor', versions['tor'], 'tor')
-    checkout('libevent', versions['libevent'], 'libevent')
-    checkout('openssl', versions['openssl'], 'openssl')
-    checkout('xz', versions['xz'], 'xz')
-    checkout('zlib', versions['zlib'], 'zlib')
-    checkout('zstd', versions['zstd'], 'zstd')
+    check_call(['git', 'clean', '-dffx'], cwd=path)
+    check_call(['git', 'submodule', 'foreach', 'git', 'clean', '-dffx'], cwd=path)
 
 
 def get_version():
@@ -115,25 +153,18 @@ def get_file_suffix(versions, platform):
 
 
 def get_final_file_name(versions, platform):
-    version = get_version_tag(versions)
-    if version < '0.3.5.14':
-        return 'tor-%s.zip' % get_file_suffix(versions, platform)
-    else:
-        return 'tor-%s.jar' % get_file_suffix(versions, platform)
+    file = 'tor-%s.jar' % get_file_suffix(versions, platform)
+    return os.path.join(get_output_dir(platform), file)
 
 
 def get_sources_file_name(versions, platform):
-    return 'tor-%s-sources.jar' % get_file_suffix(versions, platform)
+    file = 'tor-%s-sources.jar' % get_file_suffix(versions, platform)
+    return os.path.join(get_output_dir(platform), file)
 
 
 def get_pom_file_name(versions, platform):
-    return 'tor-%s.pom' % get_file_suffix(versions, platform)
-
-
-def checkout(name, tag, path):
-    print("Checking out %s: %s" % (name, tag))
-    repo_path = os.path.join(EXT_DIR, path)
-    check_call(['git', 'checkout', '-f', tag], cwd=repo_path)
+    file = 'tor-%s.pom' % get_file_suffix(versions, platform)
+    return os.path.join(get_output_dir(platform), file)
 
 
 def pack(versions, file_list, platform):
@@ -141,21 +172,18 @@ def pack(versions, file_list, platform):
     for filename in file_list:
         reset_time(filename, versions)
     zip_name = get_final_file_name(versions, platform)
-    check_call(['zip', '-D', '-X', zip_name] + file_list)
+    check_call(['zip', '--no-dir-entries', '--junk-paths', '-X', zip_name] + file_list)
     return zip_name
 
 
 def reset_time(filename, versions):
-    if 'timestamp' in versions:
-        timestamp = versions['timestamp']
-    else:
-        timestamp = '197001010000.00'
-    check_call(['touch', '--no-dereference', '-t', timestamp, filename])
+    check_call(['touch', '--no-dereference', '-t', versions['timestamp'], filename])
 
 
 def create_sources_jar(versions, platform):
+    output_dir = get_output_dir(platform)
     jar_files = []
-    for root, dir_names, filenames in os.walk(EXT_DIR):
+    for root, dir_names, filenames in os.walk(BUILD_DIR):
         for f in filenames:
             if '/.git' in root:
                 continue
@@ -164,8 +192,13 @@ def create_sources_jar(versions, platform):
         reset_time(file, versions)
     jar_name = get_sources_file_name(versions, platform)
     jar_path = os.path.abspath(jar_name)
-    rel_paths = [os.path.relpath(f, EXT_DIR) for f in sorted(jar_files)]
-    check_call(['jar', 'cf', jar_path] + rel_paths, cwd=EXT_DIR)
+    rel_paths = [os.path.relpath(f, BUILD_DIR) for f in sorted(jar_files)]
+    # create jar archive with first files
+    jar_step = 5000
+    check_call(['jar', 'cf', jar_path] + rel_paths[0:jar_step], cwd=BUILD_DIR)
+    # add subsequent files in steps, because the command line can't handle all at once
+    for i in range(jar_step, len(rel_paths), jar_step):
+        check_call(['jar', 'uf', jar_path] + rel_paths[i:i + jar_step], cwd=BUILD_DIR)
     return jar_name
 
 

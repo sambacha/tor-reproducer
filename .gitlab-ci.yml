@@ -21,32 +21,72 @@ build:
     - docker build -t ${TEST_IMAGE} .
     - docker push $TEST_IMAGE
 
-test_build:
+.base-android:
   stage: test
-  script:
-    - docker run -v `pwd`:/opt/tor-reproducer ${TEST_IMAGE} /bin/bash -c "./build_tor.py && ./verify_tor.py"
   artifacts:
     paths:
-    - tor-*.zip
-    - tor-*.pom
-    - tor-*-sources.jar
+      - output/android
     expire_in: 1 week
     when: always
+
+.base-linux:
+  stage: test
+  artifacts:
+    paths:
+      - output/linux
+    expire_in: 1 week
+    when: always
+
+.base-windows:
+  stage: test
+  artifacts:
+    paths:
+      - output/windows
+    expire_in: 1 week
+    when: always
+
+test_build_android:
+  extends: .base-android
+  script:
+    - docker run -v `pwd`/output:/opt/tor-reproducer/output ${TEST_IMAGE} /bin/bash -c "./build_tor_android.py && ./verify_tor_android.py"
   allow_failure: true
   except:
     - tags
 
-test_tag:
-  stage: test
+test_build_linux:
+  extends: .base-linux
   script:
-    - docker run -v `pwd`:/opt/tor-reproducer ${TEST_IMAGE} ./verify_tor.py ${CI_BUILD_REF_NAME}
-  artifacts:
-    paths:
-    - tor-*.zip
-    - tor-*.pom
-    - tor-*-sources.jar
-    expire_in: 1 week
-    when: always
+    - docker run -v `pwd`/output:/opt/tor-reproducer/output ${TEST_IMAGE} /bin/bash -c "./build_tor_linux.py && ./verify_tor_linux.py"
+  allow_failure: true
+  except:
+    - tags
+
+test_build_windows:
+  extends: .base-windows
+  script:
+    - docker run -v `pwd`/output:/opt/tor-reproducer/output ${TEST_IMAGE} /bin/bash -c "./build_tor_windows.py && ./verify_tor_windows.py"
+  allow_failure: true
+  except:
+    - tags
+
+test_tag_android:
+  extends: .base-android
+  script:
+    - docker run -v `pwd`/output:/opt/tor-reproducer/output ${TEST_IMAGE} ./verify_tor.py ${CI_BUILD_REF_NAME}
+  only:
+    - tags
+
+test_tag_linux:
+  extends: .base-linux
+  script:
+    - docker run -v `pwd`/output:/opt/tor-reproducer/output ${TEST_IMAGE} ./verify_tor_linux.py ${CI_BUILD_REF_NAME}
+  only:
+    - tags
+
+test_tag_windows:
+  extends: .base-windows
+  script:
+    - docker run -v `pwd`/output:/opt/tor-reproducer/output ${TEST_IMAGE} ./verify_tor_windows.py ${CI_BUILD_REF_NAME}
   only:
     - tags
 

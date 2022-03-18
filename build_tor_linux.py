@@ -4,7 +4,8 @@ from shutil import rmtree, copy
 from subprocess import check_call
 
 import utils
-from utils import REPO_DIR, EXT_DIR, reset_time, get_sha256
+from utils import BUILD_DIR, get_output_dir, TOR_CONFIGURE_FLAGS, OPENSSL_CONFIGURE_FLAGS, REPRODUCIBLE_GCC_CFLAGS, \
+    XZ_CONFIGURE_FLAGS, reset_time, get_sha256, pack, create_pom_file
 
 PLATFORM = "linux"
 
@@ -14,7 +15,6 @@ def build():
 
     build_linux(versions)
 
-    utils.package_geoip(versions)
     package_linux(versions, jar_name)
 
 
@@ -27,12 +27,12 @@ def build_linux(versions):
 def build_linux_arch(arch, gcc_arch, cc_env, openssl_target, autogen_host, versions):
     name = "tor_linux-%s.zip" % arch
     print("Building %s" % name)
-    prefix_dir = os.path.abspath(os.path.join(REPO_DIR, 'prefix'))
+    prefix_dir = os.path.abspath(os.path.join(BUILD_DIR, 'prefix'))
     lib_dir = os.path.join(prefix_dir, 'lib')
     include_dir = os.path.join(prefix_dir, 'include')
 
     # ensure clean build environment (again here to protect against build reordering)
-    utils.prepare_tor_android_repo(versions)
+    utils.prepare_repos(versions)
     if os.path.exists(prefix_dir):
         rmtree(prefix_dir)
 
@@ -43,63 +43,98 @@ def build_linux_arch(arch, gcc_arch, cc_env, openssl_target, autogen_host, versi
 
     # setup environment
     env = os.environ.copy()
+    env['SOURCE_DATE_EPOCH'] = "1234567890"
     env['LDFLAGS'] = "-L%s" % lib_dir
     env['LD_LIBRARY_PATH'] = lib_dir
-    env['CFLAGS'] = "-fPIC -I%s" % include_dir
+    env['CFLAGS'] = REPRODUCIBLE_GCC_CFLAGS + ' -fPIC -I%s' % include_dir
+    env['PKG_CONFIG_PATH'] = os.path.join(lib_dir, 'pkgconfig')
     env['LIBS'] = "-ldl -L%s" % lib_dir
     env['CC'] = cc_env
 
+    # build lzma
+    xz_dir = os.path.join(BUILD_DIR, 'xz')
+    check_call(['./autogen.sh'], cwd=xz_dir)
+    check_call(['./configure',
+                '--prefix=%s' % prefix_dir,
+                '--host=%s' % autogen_host,
+                ] + XZ_CONFIGURE_FLAGS, cwd=xz_dir, env=env)
+    check_call(['make', '-j', str(os.cpu_count()), 'install'], cwd=xz_dir, env=env)
+
+    # build zstd
+    zstd_dir = os.path.join(BUILD_DIR, 'zstd', "lib")
+    check_call(['make', '-j', str(os.cpu_count()), 'DESTDIR=%s' % prefix_dir, 'PREFIX=""', 'install'],
+               cwd=zstd_dir, env=env)
+
     # build zlib
-    zlib_dir = os.path.join(EXT_DIR, 'zlib')
+    zlib_dir = os.path.join(BUILD_DIR, 'zlib')
     check_call(['./configure', '--prefix=%s' % prefix_dir], cwd=zlib_dir, env=env)
-    check_call(['make', 'install'], cwd=zlib_dir, env=env)
+    check_call(['make', '-j', str(os.cpu_count()), 'install'], cwd=zlib_dir, env=env)
 
     # build openssl
-    openssl_dir = os.path.join(EXT_DIR, 'openssl')
-    check_call(['perl', 'Configure', '--prefix=%s' % prefix_dir,
-                '--openssldir=%s' % prefix_dir, '-march=%s' % gcc_arch,
-                openssl_target, 'shared'], cwd=openssl_dir, env=env)
-    check_call(['make'], cwd=openssl_dir, env=env)
+    openssl_dir = os.path.join(BUILD_DIR, 'openssl')
+    extra_flags = []
+    if autogen_host.endswith("64"):
+        extra_flags = ['enable-ec_nistp_64_gcc_128']
+    check_call(['perl', 'Configure',
+                '--prefix=%s' % prefix_dir,
+                '--openssldir=%s' % prefix_dir,
+                '-march=%s' % gcc_arch,
+                openssl_target,
+                'shared',
+                ] + OPENSSL_CONFIGURE_FLAGS + extra_flags, cwd=openssl_dir, env=env)
+    check_call(['make', '-j', str(os.cpu_count())], cwd=openssl_dir, env=env)
     check_call(['make', 'install_sw'], cwd=openssl_dir, env=env)
 
     # build libevent
-    libevent_dir = os.path.join(EXT_DIR, 'libevent')
+    libevent_dir = os.path.join(BUILD_DIR, 'libevent')
     check_call(['./autogen.sh'], cwd=libevent_dir)
     check_call(['./configure', '--disable-shared', '--prefix=%s' % prefix_dir,
                 '--host=%s' % autogen_host], cwd=libevent_dir, env=env)
-    check_call(['make'], cwd=libevent_dir, env=env)
+    check_call(['make', '-j', str(os.cpu_count())], cwd=libevent_dir, env=env)
     check_call(['make', 'install'], cwd=libevent_dir, env=env)
 
     # build Tor
-    tor_dir = os.path.join(EXT_DIR, 'tor')
+    tor_dir = os.path.join(BUILD_DIR, 'tor')
     check_call(['./autogen.sh'], cwd=tor_dir)
     env['CFLAGS'] += ' -O3'  # needed for FORTIFY_SOURCE
-    check_call(['./configure', '--disable-asciidoc', '--disable-systemd',
-                '--enable-static-zlib', '--with-zlib-dir=%s' % prefix_dir,
-                '--enable-static-libevent', '--with-libevent-dir=%s' % prefix_dir,
-                '--enable-static-openssl', '--with-openssl-dir=%s' % prefix_dir,
-                '--prefix=%s' % prefix_dir, '--host=%s' % autogen_host,
-                '--disable-tool-name-check'], cwd=tor_dir, env=env)
-    check_call(['make', 'install'], cwd=tor_dir, env=env)
+    # TODO check if a completely static Tor is still portable
+    #  '--enable-static-tor',
+    check_call(['./configure',
+                '--host=%s' % autogen_host,
+                '--prefix=%s' % prefix_dir,
+                '--enable-lzma',
+                '--enable-zstd',
+                '--enable-static-zlib',
+                '--with-zlib-dir=%s' % prefix_dir,
+                '--enable-static-libevent',
+                '--with-libevent-dir=%s' % prefix_dir,
+                '--enable-static-openssl',
+                '--with-openssl-dir=%s' % prefix_dir,
+                ] + TOR_CONFIGURE_FLAGS, cwd=tor_dir, env=env)
+    check_call(['make', '-j', str(os.cpu_count()), 'install'], cwd=tor_dir, env=env)
 
     # copy and zip built Tor binary
-    tor_path = os.path.join(REPO_DIR, 'tor')
-    copy(os.path.join(prefix_dir, 'bin', 'tor'), tor_path)
-    check_call(['strip', '-D', 'tor'], cwd=REPO_DIR)
+    output_dir = get_output_dir(PLATFORM)
+    tor_path = os.path.join(output_dir, 'tor')
+    copy(os.path.join(BUILD_DIR, 'tor', 'src', 'app', 'tor'), tor_path)
+    check_call(['strip', '-D', '--strip-unneeded', '--strip-debug', '-R', '.note*', '-R', '.comment', tor_path])
     reset_time(tor_path, versions)
     print("Sha256 hash of tor before zipping %s: %s" % (name, get_sha256(tor_path)))
-    check_call(['zip', '-X', '../' + name, 'tor'], cwd=REPO_DIR)
+    check_call(['zip', '--no-dir-entries', '--junk-paths', '-X', name, 'tor'], cwd=output_dir)
+    os.remove(tor_path)
 
 
 def package_linux(versions, jar_name):
     # zip binaries together
-    file_list = ['tor_linux-aarch64.zip', 'tor_linux-armhf.zip', 'tor_linux-x86_64.zip', 'geoip.zip']
-    zip_name = utils.pack(versions, file_list, PLATFORM)
-
-    # create POM file from template
-    pom_name = utils.create_pom_file(versions, PLATFORM)
-
-    # print hashes for debug purposes
+    output_dir = get_output_dir(PLATFORM)
+    file_list = [
+        os.path.join(output_dir, 'tor_linux-aarch64.zip'),
+        os.path.join(output_dir, 'tor_linux-armhf.zip'),
+        os.path.join(output_dir, 'tor_linux-x86_64.zip'),
+    ]
+    zip_name = pack(versions, file_list, PLATFORM)
+    pom_name = create_pom_file(versions, PLATFORM)
+    print("%s:" % PLATFORM)
     for file in file_list + [zip_name, jar_name, pom_name]:
         sha256hash = get_sha256(file)
         print("%s: %s" % (file, sha256hash))

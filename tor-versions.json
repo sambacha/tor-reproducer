@@ -1,234 +1,66 @@
 {
-  "0.3.5.17": {
-    "tor": "tor-0.3.5.17",
-    "libevent": "release-2.1.8-stable",
-    "openssl": "OpenSSL_1_0_2u",
-    "xz": "v5.2.5",
-    "zlib": "v1.2.11",
-    "zstd": "v1.3.8",
-    "tor-android": "55791c108d4b732b1c12866e4db3b8b1fd826bf1",
-    "tor_android_repo_url": "https://github.com/n8fr8/tor-android",
+  "0.4.5.12": {
+    "tor": {
+      "url": "https://git.torproject.org/git/tor.git",
+      "commit": "tor-0.4.5.12"
+    },
+    "libevent": {
+      "url": "https://github.com/libevent/libevent.git",
+      "commit": "release-2.1.12-stable"
+    },
+    "openssl": {
+      "url": "https://github.com/openssl/openssl.git",
+      "commit": "OpenSSL_1_1_1m"
+    },
+    "xz": {
+      "url": "https://git.tukaani.org/xz.git",
+      "commit": "v5.2.5"
+    },
+    "zlib": {
+      "url": "https://github.com/madler/zlib.git",
+      "commit": "v1.2.11"
+    },
+    "zstd": {
+      "url": "https://github.com/facebook/zstd.git",
+      "commit": "v1.4.8"
+    },
     "ndk": {
-      "url": "https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip",
-      "revision": "15.2.4203891",
-      "sha256": "f01788946733bf6294a36727b99366a18369904eb068a599dde8cca2c1d2ba3c"
+      "url": "https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip",
+      "revision": "21.4.7075529",
+      "sha256": "ad7ce5467e18d40050dc51b8e7affc3e635c85bd8c59be62de32352328ed467e"
     },
     "timestamp": "201001010000.00"
   },
-  "0.3.5.15": {
-    "tor": "tor-0.3.5.15",
-    "libevent": "release-2.1.8-stable",
-    "openssl": "OpenSSL_1_0_2u",
-    "xz": "v5.2.4",
-    "zlib": "v1.2.11",
-    "zstd": "v1.3.8",
-    "tor-android": "55791c108d4b732b1c12866e4db3b8b1fd826bf1",
-    "tor_android_repo_url": "https://github.com/n8fr8/tor-android",
+  "0.4.5.10": {
+    "tor": {
+      "url": "https://git.torproject.org/git/tor.git",
+      "commit": "tor-0.4.5.10"
+    },
+    "libevent": {
+      "url": "https://github.com/libevent/libevent.git",
+      "commit": "release-2.1.12-stable"
+    },
+    "openssl": {
+      "url": "https://github.com/openssl/openssl.git",
+      "commit": "OpenSSL_1_1_1k"
+    },
+    "xz": {
+      "url": "https://git.tukaani.org/xz.git",
+      "commit": "v5.2.5"
+    },
+    "zlib": {
+      "url": "https://github.com/madler/zlib.git",
+      "commit": "v1.2.11"
+    },
+    "zstd": {
+      "url": "https://github.com/facebook/zstd.git",
+      "commit": "v1.4.8"
+    },
     "ndk": {
-      "url": "https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip",
-      "revision": "15.2.4203891",
-      "sha256": "f01788946733bf6294a36727b99366a18369904eb068a599dde8cca2c1d2ba3c"
+      "url": "https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip",
+      "revision": "21.4.7075529",
+      "sha256": "ad7ce5467e18d40050dc51b8e7affc3e635c85bd8c59be62de32352328ed467e"
     },
     "timestamp": "201001010000.00"
-  },
-  "0.3.5.14": {
-    "tor": "tor-0.3.5.14",
-    "libevent": "release-2.1.8-stable",
-    "openssl": "OpenSSL_1_0_2u",
-    "xz": "v5.2.4",
-    "zlib": "v1.2.11",
-    "zstd": "v1.3.8",
-    "tor-android": "55791c108d4b732b1c12866e4db3b8b1fd826bf1",
-    "tor_android_repo_url": "https://github.com/n8fr8/tor-android",
-    "ndk": {
-      "url": "https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip",
-      "revision": "15.2.4203891",
-      "sha256": "f01788946733bf6294a36727b99366a18369904eb068a599dde8cca2c1d2ba3c"
-    },
-    "timestamp": "201001010000.00"
-  },
-  "0.3.5.13-1": {
-    "tor": "tor-0.3.5.13",
-    "libevent": "release-2.1.8-stable",
-    "openssl": "OpenSSL_1_0_2u",
-    "xz": "v5.2.4",
-    "zlib": "v1.2.11",
-    "zstd": "v1.3.8",
-    "tor-android": "55791c108d4b732b1c12866e4db3b8b1fd826bf1",
-    "tor_android_repo_url": "https://github.com/n8fr8/tor-android",
-    "ndk": {
-      "url": "https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip",
-      "revision": "15.2.4203891",
-      "sha256": "f01788946733bf6294a36727b99366a18369904eb068a599dde8cca2c1d2ba3c"
-    },
-    "timestamp": "201001010000.00"
-  },
-  "0.3.5.13": {
-    "tor": "tor-0.3.5.13",
-    "libevent": "release-2.1.8-stable",
-    "openssl": "OpenSSL_1_0_2u",
-    "xz": "v5.2.4",
-    "zlib": "v1.2.11",
-    "zstd": "v1.3.8",
-    "tor-android": "55791c108d4b732b1c12866e4db3b8b1fd826bf1",
-    "tor_android_repo_url": "https://github.com/n8fr8/tor-android",
-    "ndk": {
-      "url": "https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip",
-      "revision": "15.2.4203891",
-      "sha256": "f01788946733bf6294a36727b99366a18369904eb068a599dde8cca2c1d2ba3c"
-    },
-    "timestamp": "201001010000.00"
-  },
-  "0.3.5.12": {
-    "tor": "tor-0.3.5.12",
-    "libevent": "release-2.1.8-stable",
-    "openssl": "OpenSSL_1_0_2u",
-    "xz": "v5.2.4",
-    "zlib": "v1.2.11",
-    "zstd": "v1.3.8",
-    "tor-android": "55791c108d4b732b1c12866e4db3b8b1fd826bf1",
-    "tor_android_repo_url": "https://github.com/n8fr8/tor-android",
-    "ndk": {
-      "url": "https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip",
-      "revision": "15.2.4203891",
-      "sha256": "f01788946733bf6294a36727b99366a18369904eb068a599dde8cca2c1d2ba3c"
-    },
-    "timestamp": "201001010000.00"
-  },
-  "0.3.5.11": {
-    "tor": "tor-0.3.5.11",
-    "libevent": "release-2.1.8-stable",
-    "openssl": "OpenSSL_1_0_2u",
-    "xz": "v5.2.4",
-    "zlib": "v1.2.11",
-    "zstd": "v1.3.8",
-    "tor-android": "55791c108d4b732b1c12866e4db3b8b1fd826bf1",
-    "tor_android_repo_url": "https://github.com/n8fr8/tor-android",
-    "ndk": {
-      "url": "https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip",
-      "revision": "15.2.4203891",
-      "sha256": "f01788946733bf6294a36727b99366a18369904eb068a599dde8cca2c1d2ba3c"
-    },
-    "timestamp": "201001010000.00"
-  },
-  "0.3.5.10": {
-    "tor": "tor-0.3.5.10",
-    "libevent": "release-2.1.8-stable",
-    "openssl": "OpenSSL_1_0_2u",
-    "xz": "v5.2.4",
-    "zlib": "v1.2.11",
-    "zstd": "v1.3.8",
-    "tor-android": "55791c108d4b732b1c12866e4db3b8b1fd826bf1",
-    "tor_android_repo_url": "https://github.com/n8fr8/tor-android",
-    "ndk": {
-      "url": "https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip",
-      "revision": "15.2.4203891",
-      "sha256": "f01788946733bf6294a36727b99366a18369904eb068a599dde8cca2c1d2ba3c"
-    }
-  },
-  "0.3.5.9": {
-    "tor": "tor-0.3.5.9",
-    "libevent": "release-2.1.8-stable",
-    "openssl": "OpenSSL_1_0_2q",
-    "xz": "v5.2.4",
-    "zlib": "v1.2.11",
-    "zstd": "v1.3.8",
-    "tor-android": "55791c108d4b732b1c12866e4db3b8b1fd826bf1",
-    "tor_android_repo_url": "https://github.com/n8fr8/tor-android",
-    "ndk": {
-      "url": "https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip",
-      "revision": "15.2.4203891",
-      "sha256": "f01788946733bf6294a36727b99366a18369904eb068a599dde8cca2c1d2ba3c"
-    }
-  },
-  "0.3.5.8-64": {
-    "tor": "tor-0.3.5.8",
-    "libevent": "release-2.1.8-stable",
-    "openssl": "OpenSSL_1_0_2q",
-    "xz": "v5.2.4",
-    "zlib": "v1.2.11",
-    "zstd": "v1.3.8",
-    "tor-android": "55791c108d4b732b1c12866e4db3b8b1fd826bf1",
-    "tor_android_repo_url": "https://github.com/n8fr8/tor-android",
-    "ndk": {
-      "url": "https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip",
-      "revision": "15.2.4203891",
-      "sha256": "f01788946733bf6294a36727b99366a18369904eb068a599dde8cca2c1d2ba3c"
-    }
-  },
-  "0.3.5.8": {
-    "tor": "tor-0.3.5.8",
-    "libevent": "release-2.1.8-stable",
-    "openssl": "OpenSSL_1_0_2q",
-    "xz": "v5.2.4",
-    "zlib": "v1.2.11",
-    "zstd": "v1.3.8",
-    "tor-android": "8eb128aa63b97e139bc845a9426b406245770096",
-    "tor_android_repo_url": "https://github.com/n8fr8/tor-android",
-    "ndk": {
-      "url": "https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip",
-      "revision": "15.2.4203891",
-      "sha256": "f01788946733bf6294a36727b99366a18369904eb068a599dde8cca2c1d2ba3c"
-    }
-  },
-  "0.3.5.7": {
-    "tor": "tor-0.3.5.7",
-    "libevent": "release-2.1.8-stable",
-    "openssl": "OpenSSL_1_0_2q",
-    "xz": "v5.2.4",
-    "zlib": "v1.2.11",
-    "zstd": "v1.3.8",
-    "tor-android": "8eb128aa63b97e139bc845a9426b406245770096",
-    "tor_android_repo_url": "https://github.com/n8fr8/tor-android",
-    "ndk": {
-      "url": "https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip",
-      "revision": "15.2.4203891",
-      "sha256": "f01788946733bf6294a36727b99366a18369904eb068a599dde8cca2c1d2ba3c"
-    }
-  },
-  "0.3.4.8": {
-    "tor": "tor-0.3.4.8",
-    "libevent": "release-2.0.22-stable",
-    "openssl": "OpenSSL_1_0_2p",
-    "xz": "v5.2.4",
-    "zlib": "v1.2.11",
-    "zstd": "v1.3.5",
-    "tor-android": "fa1ed5505d20aae51cb4cceb51bd9c5164066259",
-    "tor_android_repo_url": "https://github.com/n8fr8/tor-android",
-    "ndk": {
-      "url": "https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip",
-      "revision": "15.2.4203891",
-      "sha256": "f01788946733bf6294a36727b99366a18369904eb068a599dde8cca2c1d2ba3c"
-    }
-  },
-  "0.2.9.16": {
-    "tor": "tor-0.2.9.16",
-    "libevent": "release-2.0.22-stable",
-    "openssl": "OpenSSL_1_0_2o",
-    "xz": "v5.2.4",
-    "zlib": "v1.2.11",
-    "zstd": "v1.3.5",
-    "tor-android": "tor-android-binary-0.3.3.5-rc-3",
-    "tor_android_repo_url": "https://github.com/n8fr8/tor-android",
-    "ndk": {
-      "url": "https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip",
-      "revision": "15.2.4203891",
-      "sha256": "f01788946733bf6294a36727b99366a18369904eb068a599dde8cca2c1d2ba3c"
-    }
-  },
-  "0.2.9.15": {
-    "tor": "tor-0.2.9.15",
-    "libevent": "release-2.0.22-stable",
-    "openssl": "OpenSSL_1_0_2o",
-    "xz": "v5.2.3",
-    "zlib": "v1.2.11",
-    "zstd": "v1.3.2",
-    "tor-android": "tor-android-binary-0.3.3.5-rc-3",
-    "tor_android_repo_url": "https://github.com/n8fr8/tor-android",
-    "ndk": {
-      "url": "https://dl.google.com/android/repository/android-ndk-r15c-linux-x86_64.zip",
-      "revision": "15.2.4203891",
-      "sha256": "f01788946733bf6294a36727b99366a18369904eb068a599dde8cca2c1d2ba3c"
-    }
   }
 }
