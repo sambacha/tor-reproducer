@@ -117,7 +117,7 @@ def build_linux_arch(arch, gcc_arch, cc_env, openssl_target, autogen_host, versi
     output_dir = get_output_dir(PLATFORM)
     tor_path = os.path.join(output_dir, 'tor')
     copy(os.path.join(BUILD_DIR, 'tor', 'src', 'app', 'tor'), tor_path)
-    check_call(['strip', '-D', '--strip-unneeded', '--strip-debug', '-R', '.note*', '-R', '.comment', tor_path])
+    check_call(['strip', '-D', tor_path])
     reset_time(tor_path, versions)
     print("Sha256 hash of tor before zipping %s: %s" % (name, get_sha256(tor_path)))
     check_call(['zip', '--no-dir-entries', '--junk-paths', '-X', name, 'tor'], cwd=output_dir)

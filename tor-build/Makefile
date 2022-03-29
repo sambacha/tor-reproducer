@@ -273,7 +273,7 @@ tor/Makefile: tor/configure.ac tor/Makefile.am
 
 tor-build-stamp: tor/Makefile
 	$(MAKE) -C tor
-	$(NDK_TOOLCHAIN_BASE)/bin/$(ALTHOST)-strip -D --strip-unneeded -R .note* -R .comment --strip-debug $(OUTPUT_FILE)
+	$(NDK_TOOLCHAIN_BASE)/bin/$(ALTHOST)-strip -D $(OUTPUT_FILE)
 	touch $@
 
 tor: lzma-build-stamp zstd-build-stamp libevent-build-stamp openssl-build-stamp tor-build-stamp
