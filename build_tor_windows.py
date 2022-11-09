@@ -23,8 +23,7 @@ def build_windows(versions):
 
 
 def build_windows_arch(arch, host, versions):
-    name = "tor_windows-%s.zip" % arch
-    print("Building %s" % name)
+    print("Building Tor for Windows %s" % arch)
     prefix_dir = os.path.abspath(os.path.join(BUILD_DIR, 'prefix'))
     lib_dir = os.path.join(prefix_dir, 'lib')
     include_dir = os.path.join(prefix_dir, 'include')
@@ -115,22 +114,22 @@ def build_windows_arch(arch, host, versions):
     check_call(['make', '-j', str(os.cpu_count())], cwd=tor_dir, env=env)
     check_call(['make', 'install'], cwd=tor_dir, env=env)
 
-    # copy and zip built Tor binary
+    # copy built Tor binary
     output_dir = get_output_dir(PLATFORM)
-    tor_path = os.path.join(output_dir, 'tor')
+    arch_dir = os.path.join(output_dir, arch)
+    os.mkdir(arch_dir)
+    tor_path = os.path.join(arch_dir, 'tor.exe')
     copy(os.path.join(prefix_dir, 'bin', 'tor.exe'), tor_path)
     check_call(['strip', '-D', tor_path])
     reset_time(tor_path, versions)
-    print("Sha256 hash of tor before zipping %s: %s" % (name, get_sha256(tor_path)))
-    check_call(['zip', '--no-dir-entries', '--junk-paths', '-X', name, 'tor'], cwd=output_dir)
-    os.remove(tor_path)
+    print("Sha256 hash of Tor for Windows %s: %s" % (arch, get_sha256(tor_path)))
 
 
 def package_windows(versions, jar_name):
     # zip binaries together
     output_dir = get_output_dir(PLATFORM)
     file_list = [
-        os.path.join(output_dir, 'tor_windows-x86_64.zip'),
+        os.path.join(output_dir, 'x86_64', 'tor.exe'),
     ]
     zip_name = utils.pack(versions, file_list, PLATFORM)
     pom_name = utils.create_pom_file(versions, PLATFORM)

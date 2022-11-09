@@ -61,54 +61,58 @@ def build_android(versions):
     os.environ.pop("PIEFLAGS", None)
 
     # build arm pie
+    app_abi = 'armeabi-v7a'
     env = os.environ.copy()
-    env['APP_ABI'] = "armeabi-v7a"
+    env['APP_ABI'] = app_abi
     env['NDK_PLATFORM_LEVEL'] = "16"  # first level supporting PIE
-    build_android_arch('tor_arm_pie.zip', env, versions)
+    build_android_arch(app_abi, env, versions)
 
     # build arm64 pie
+    app_abi = 'arm64-v8a'
     env = os.environ.copy()
-    env['APP_ABI'] = "arm64-v8a"
+    env['APP_ABI'] = app_abi
     env['NDK_PLATFORM_LEVEL'] = "21"  # first level supporting 64-bit
-    build_android_arch('tor_arm64_pie.zip', env, versions)
+    build_android_arch(app_abi, env, versions)
 
     # build x86 pie
+    app_abi = 'x86'
     env = os.environ.copy()
-    env['APP_ABI'] = "x86"
+    env['APP_ABI'] = app_abi
     env['NDK_PLATFORM_LEVEL'] = "16"  # first level supporting PIE
-    build_android_arch('tor_x86_pie.zip', env, versions)
+    build_android_arch(app_abi, env, versions)
 
     # build x86_64 pie
+    app_abi = 'x86_64'
     env = os.environ.copy()
-    env['APP_ABI'] = "x86_64"
+    env['APP_ABI'] = app_abi
     env['NDK_PLATFORM_LEVEL'] = "21"  # first level supporting 64-bit
-    build_android_arch('tor_x86_64_pie.zip', env, versions)
+    build_android_arch(app_abi, env, versions)
 
 
-def build_android_arch(name, env, versions):
-    print("Building %s" % name)
+def build_android_arch(app_abi, env, versions):
+    print("Building Tor for Android %s" % app_abi)
     output_dir = get_output_dir(PLATFORM)
     # TODO add extra flags to configure?
     #  '--enable-static-tor',
     #  '--enable-static-zlib',
     check_call(['make', 'clean', 'tor'], cwd=BUILD_DIR, env=env)
-    tor_path = os.path.join(output_dir, 'tor')
+    arch_dir = os.path.join(output_dir, app_abi)
+    os.mkdir(arch_dir)
+    tor_path = os.path.join(arch_dir, 'libtor.so')
     # note: stripping happens in makefile for now
     copy(os.path.join(BUILD_DIR, 'tor', 'src', 'app', 'tor'), tor_path)
     reset_time(tor_path, versions)
-    print("Sha256 hash of tor before zipping %s: %s" % (name, get_sha256(tor_path)))
-    check_call(['zip', '--no-dir-entries', '--junk-paths', '-X', name, 'tor'], cwd=output_dir)
-    os.remove(tor_path)
+    print("Sha256 hash of Tor for Android %s: %s" % (app_abi, get_sha256(tor_path)))
 
 
 def package_android(versions, jar_name):
     # zip binaries together
     output_dir = get_output_dir(PLATFORM)
     file_list = [
-        os.path.join(output_dir, 'tor_arm_pie.zip'),
-        os.path.join(output_dir, 'tor_arm64_pie.zip'),
-        os.path.join(output_dir, 'tor_x86_pie.zip'),
-        os.path.join(output_dir, 'tor_x86_64_pie.zip'),
+        os.path.join(output_dir, 'armeabi-v7a', 'libtor.so'),
+        os.path.join(output_dir, 'arm64-v8a', 'libtor.so'),
+        os.path.join(output_dir, 'x86', 'libtor.so'),
+        os.path.join(output_dir, 'x86_64', 'libtor.so'),
     ]
     zip_name = utils.pack(versions, file_list, PLATFORM)
     pom_name = utils.create_pom_file(versions, PLATFORM)

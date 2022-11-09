@@ -1,4 +1,36 @@
 {
+  "0.4.5.14-1": {
+    "tor": {
+      "url": "https://git.torproject.org/git/tor.git",
+      "commit": "tor-0.4.5.14"
+    },
+    "libevent": {
+      "url": "https://github.com/libevent/libevent.git",
+      "commit": "release-2.1.12-stable"
+    },
+    "openssl": {
+      "url": "https://github.com/openssl/openssl.git",
+      "commit": "OpenSSL_1_1_1q"
+    },
+    "xz": {
+      "url": "https://git.tukaani.org/xz.git",
+      "commit": "v5.2.6"
+    },
+    "zlib": {
+      "url": "https://github.com/madler/zlib.git",
+      "commit": "v1.2.12"
+    },
+    "zstd": {
+      "url": "https://github.com/facebook/zstd.git",
+      "commit": "v1.4.9"
+    },
+    "ndk": {
+      "url": "https://dl.google.com/android/repository/android-ndk-r21e-linux-x86_64.zip",
+      "revision": "21.4.7075529",
+      "sha256": "ad7ce5467e18d40050dc51b8e7affc3e635c85bd8c59be62de32352328ed467e"
+    },
+    "timestamp": "201001010000.00"
+  },
   "0.4.5.14": {
     "tor": {
       "url": "https://git.torproject.org/git/tor.git",
